@@ -124,7 +124,7 @@ h1 em { font-style: normal; color: var(--hi); }
   <h1>Corner <em>Office</em></h1>
   <p class="lede">Every tower has one. Start on the ground floor, build your portfolio, and earn the view from the top.</p>
   <nav class="bars" aria-label="Investor entry">
-    <a class="bar create" id="create-investor" href="#create-investor" data-msg="Create Investor selected. The sign-up page connects here.">Create Investor <span class="arrow" aria-hidden="true">→</span></a>
+    <a class="bar create" id="create-investor" href="signup.html">Create Investor <span class="arrow" aria-hidden="true">→</span></a>
     <a class="bar login" id="investor-login" href="#investor-login" data-msg="Investor Login selected. The login page connects here.">Investor Login <span class="arrow" aria-hidden="true">→</span></a>
   </nav>
   <p id="status" role="status" aria-live="polite"></p>
@@ -356,7 +356,7 @@ h1 em { font-style: normal; color: var(--hi); }
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resize, 150); });
 
   var status = document.getElementById('status');
-  document.querySelectorAll('.bar').forEach(function (a) {
+  document.querySelectorAll('.bar[data-msg]').forEach(function (a) {
     a.addEventListener('click', function (e) { e.preventDefault(); status.textContent = a.dataset.msg; });
   });
 
