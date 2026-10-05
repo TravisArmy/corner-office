@@ -341,7 +341,8 @@ button.bar { width: 100%; font-family: var(--display); font-size: clamp(20px, 5.
     var b = mark(em, 'email-err', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim()) ? '' : 'Enter a full email address, like you@example.com.');
     var c = mark(pw, 'pw-err', pw.value.length >= 8 ? '' : 'Use at least 8 characters.');
     if (!a) nm.focus(); else if (!b) em.focus(); else if (!c) pw.focus();
-    st.textContent = (a && b && c) ? 'Design preview: the form checks out. Accounts are not connected yet, so nothing was saved.' : '';
+    if (a && b && c) { window.location.href = 'office.html'; return; }
+    st.textContent = '';
   });
 })();
 </script>

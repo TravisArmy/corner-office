@@ -379,7 +379,8 @@ button.bar { width: 100%; font-family: var(--display); font-size: clamp(20px, 5.
     var a = mark(em, 'email-err', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim()) ? '' : 'Enter the email you signed up with.');
     var b = mark(pw, 'pw-err', pw.value.length ? '' : 'Enter your password.');
     if (!a) em.focus(); else if (!b) pw.focus();
-    st.textContent = (a && b) ? 'Design preview: accounts are not connected yet, so nobody was logged in.' : '';
+    if (a && b) { window.location.href = 'office.html'; return; }
+    st.textContent = '';
   });
 })();
 </script>
