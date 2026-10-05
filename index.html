@@ -1,0 +1,378 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Corner Office</title></head><body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a full-screen living skyline; signage-style entry bars anchored lower left, like wayfinding at a transit hall. Night is the default scene, day is a switch. */
+:root {
+  color-scheme: dark;
+  --ground: #0a0d26;
+  --scrim: 10, 13, 38;
+  --scrim-a: .8; --scrim-b: .38; --scrim-c: .5;
+  --sodium: #ffbe5c;
+  --sodium-deep: #f09a2e;
+  --hi: #ffbe5c;
+  --paper: #f6efe2;
+  --mist: #b9b3d6;
+  --glass: rgba(14, 12, 34, 0.62);
+  --line: rgba(246, 239, 226, 0.28);
+  --halo: rgba(10, 13, 38, 0.7);
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+:root.day {
+  color-scheme: light;
+  --ground: #bfe0f7;
+  --scrim: 14, 22, 52;
+  --scrim-a: .62; --scrim-b: .22; --scrim-c: 0;
+  --hi: #ffd27a;
+  --paper: #ffffff;
+  --mist: #e3ecfb;
+  --glass: rgba(14, 22, 52, 0.58);
+  --line: rgba(255, 255, 255, 0.42);
+  --halo: rgba(10, 18, 48, 0.6);
+}
+html, body { height: 100%; }
+body {
+  background: var(--ground);
+  color: var(--paper);
+  font-family: var(--body);
+  font-size: 16px;
+  overflow-x: hidden;
+}
+#city { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.scrim {
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(var(--scrim),var(--scrim-a)) 0%, rgba(var(--scrim),var(--scrim-b)) 45%, rgba(var(--scrim),0) 70%),
+    linear-gradient(0deg, rgba(var(--scrim),var(--scrim-c)) 0%, rgba(var(--scrim),0) 40%);
+}
+main {
+  position: relative;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-block: clamp(24px, 6vh, 64px);
+  padding-inline: clamp(16px, 6vw, 88px);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: clamp(20px, 4vh, 36px);
+}
+:root.day .scrim {
+  background: linear-gradient(0deg, rgba(var(--scrim),.42) 0%, rgba(var(--scrim),.16) 45%, rgba(var(--scrim),0) 80%);
+}
+#mode {
+  position: fixed; z-index: 2;
+  top: calc(env(safe-area-inset-top, 0px) + 16px); right: 16px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--paper); background: var(--glass);
+  border: 1px solid var(--line); border-radius: 3px; cursor: pointer;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+#mode:hover { border-color: var(--hi); }
+#mode:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+#mode .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--sodium); box-shadow: 0 0 10px var(--sodium); }
+.readout {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--mist);
+  display: flex; flex-wrap: wrap; gap: 6px 20px;
+  font-variant-numeric: tabular-nums;
+}
+.readout b { color: var(--hi); font-weight: 500; }
+h1 {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(52px, 11vw, 136px);
+  line-height: .88; letter-spacing: -.01em; text-transform: uppercase;
+  margin: 0; max-width: 9ch; text-wrap: balance;
+  text-shadow: 0 2px 30px var(--halo);
+}
+h1 em { font-style: normal; color: var(--hi); }
+.lede { margin: 0; max-width: 44ch; line-height: 1.55; color: var(--paper); opacity: .9; }
+.bars { display: flex; flex-direction: column; gap: 12px; width: min(100%, 460px); }
+.bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 22px;
+  font-family: var(--display); font-weight: 600; font-size: 26px;
+  letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  border: 1px solid var(--line); border-radius: 3px;
+  cursor: pointer;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+.bar span.arrow { font-family: var(--mono); font-size: 18px; transition: transform .18s ease; }
+.bar:hover { transform: translateX(6px); }
+.bar:hover .arrow { transform: translateX(6px); }
+.bar:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+.bar.create { background: var(--sodium); color: #1a1230; border-color: var(--sodium); }
+.bar.create:hover { background: var(--sodium-deep); border-color: var(--sodium-deep); }
+.bar.login { background: var(--glass); color: var(--paper); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.bar.login:hover { border-color: var(--hi); }
+.lede, .readout, #status { text-shadow: 0 1px 8px var(--halo); }
+#status { min-height: 1.4em; margin: 0; font-family: var(--mono); font-size: 13px; color: var(--mist); }
+@media (prefers-reduced-motion: reduce) { .bar, .bar .arrow { transition: none; } }
+</style>
+
+<canvas id="city" aria-hidden="true"></canvas>
+<div class="scrim"></div>
+<button id="mode" type="button"><span class="dot" aria-hidden="true"></span><span id="mode-label">Switch to day</span></button>
+
+<main>
+  <div class="readout">
+    <span>Local time <b id="clock">--:--</b></span>
+    <span>Windows lit <b id="lit">0</b></span>
+    <span>Trains running <b>on time</b></span>
+  </div>
+  <h1>Corner <em>Office</em></h1>
+  <p class="lede">Every tower has one. Start on the ground floor, build your portfolio, and earn the view from the top.</p>
+  <nav class="bars" aria-label="Investor entry">
+    <a class="bar create" id="create-investor" href="#create-investor" data-msg="Create Investor selected. The sign-up page connects here.">Create Investor <span class="arrow" aria-hidden="true">→</span></a>
+    <a class="bar login" id="investor-login" href="#investor-login" data-msg="Investor Login selected. The login page connects here.">Investor Login <span class="arrow" aria-hidden="true">→</span></a>
+  </nav>
+  <p id="status" role="status" aria-live="polite"></p>
+</main>
+
+<script>
+(function () {
+  var cv = document.getElementById('city'), cx = cv.getContext('2d');
+  var litEl = document.getElementById('lit'), clockEl = document.getElementById('clock');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W, H, dpr, layers = [], sky, cars = [], planes = [], helis = [], litCount = 0, mx = 0.5, px = 0.5, PAD = 60;
+  var day = false;
+  try { day = localStorage.getItem('cityMode') === 'day'; } catch (e) {}
+
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  var CFG = [
+    { c: [92, 68, 120], d: [170, 190, 214], minW: 14, maxW: 40, minH: .42, maxH: .78, ws: 2, gap: 3, depth: .12, lit: .30, wa: .55 },
+    { c: [62, 48, 96],  d: [136, 156, 188], minW: 22, maxW: 60, minH: .32, maxH: .64, ws: 3, gap: 4, depth: .30, lit: .36, wa: .75 },
+    { c: [36, 30, 68],  d: [102, 118, 154], minW: 34, maxW: 90, minH: .22, maxH: .50, ws: 4, gap: 5, depth: .60, lit: .42, wa: .9 },
+    { c: [16, 14, 38],  d: [66, 76, 108],   minW: 50, maxW: 130, minH: .12, maxH: .34, ws: 5, gap: 7, depth: 1, lit: .46, wa: 1 }
+  ];
+  var WIN = ['#ffc66b', '#ffb347', '#ffe0a3', '#ffd27a', '#ff9f5a', '#9fd8ff', '#fff3d6'];
+  var MATS = [[196,172,140],[150,108,92],[84,126,150],[132,138,150],[72,82,104],[210,204,192],[104,140,168]], HAZE = [176,204,232], FADE = [.74,.52,.26,.04], DARK = [1,.96,.84,.7];
+  var CARCOL = ['#e9edf3', '#c0392b', '#f2c230', '#2f3542', '#2e6fb5', '#f5f5f5'];
+
+  function buildSky() {
+    sky = document.createElement('canvas'); sky.width = W * dpr; sky.height = H * dpr;
+    var s = sky.getContext('2d'); s.scale(dpr, dpr);
+    var g = s.createLinearGradient(0, 0, 0, H), r = rng(7), i;
+    if (day) {
+      g.addColorStop(0, '#1b66bd'); g.addColorStop(.45, '#5fa9e6'); g.addColorStop(.8, '#bcdcf3'); g.addColorStop(.93, '#f6ecd9'); g.addColorStop(1, '#f6ecd9');
+      s.fillStyle = g; s.fillRect(0, 0, W, H);
+      var sx = W * .78, sy = H * .16, sg = s.createRadialGradient(sx, sy, 0, sx, sy, H * .6);
+      sg.addColorStop(0, 'rgba(255,253,240,1)'); sg.addColorStop(.07, 'rgba(255,250,225,1)'); sg.addColorStop(.11, 'rgba(255,244,200,.55)'); sg.addColorStop(.4, 'rgba(255,240,200,.18)'); sg.addColorStop(1, 'rgba(255,240,200,0)');
+      s.fillStyle = sg; s.fillRect(0, 0, W, H);
+      s.fillStyle = '#ffffff';
+      for (i = 0; i < 8; i++) {
+        var cxx = r() * W, cy = H * (.06 + r() * .32), cw = 60 + r() * 120;
+        for (var k = 0; k < 9; k++) {
+          var qx = cxx + (r() - .5) * cw * 1.6, qy = cy + (r() - .5) * 14, qr = 22 + r() * 34;
+          var cg = s.createRadialGradient(qx, qy, 0, qx, qy, qr); cg.addColorStop(0, 'rgba(255,255,255,.5)'); cg.addColorStop(1, 'rgba(255,255,255,0)');
+          s.fillStyle = cg; s.save(); s.translate(qx, qy); s.scale(1.9, .6); s.translate(-qx, -qy); s.fillRect(qx - qr, qy - qr, qr * 2, qr * 2); s.restore();
+        }
+      }
+      s.globalAlpha = 1;
+    } else {
+      g.addColorStop(0, '#070a22'); g.addColorStop(.38, '#2b2352'); g.addColorStop(.62, '#7a3f74');
+      g.addColorStop(.78, '#d9647a'); g.addColorStop(.92, '#f3a765'); g.addColorStop(1, '#f3a765');
+      s.fillStyle = g; s.fillRect(0, 0, W, H);
+      for (i = 0; i < 160; i++) {
+        var y = r() * H * .45;
+        s.globalAlpha = (1 - y / (H * .45)) * (.3 + r() * .6);
+        s.fillStyle = '#fff'; s.fillRect(r() * W, y, r() < .1 ? 1.6 : 1, r() < .1 ? 1.6 : 1);
+      }
+      s.globalAlpha = 1;
+    }
+  }
+
+  function buildLayer(cfg, li) {
+    var r = rng(101 + li * 37), c = document.createElement('canvas');
+    var lw = W + PAD * 2; c.width = lw * dpr; c.height = H * dpr;
+    var g = c.getContext('2d'); g.scale(dpr, dpr);
+    var base = H * .93, beacons = [], x = -10, rgb = day ? cfg.d : cfg.c;
+    while (x < lw) {
+      var w = cfg.minW + r() * (cfg.maxW - cfg.minW);
+      var tall = r() < .12 ? 1.25 : 1;
+      var h = H * (cfg.minH + r() * (cfg.maxH - cfg.minH)) * tall;
+      var sh = (r() - .5) * 14;
+      var mat = MATS[Math.floor(r() * MATS.length)], fd = FADE[li], dk = DARK[li];
+      mat = [mat[0] * dk, mat[1] * dk, mat[2] * dk];
+      if (day) rgb = [mat[0] * (1 - fd) + HAZE[0] * fd, mat[1] * (1 - fd) + HAZE[1] * fd, mat[2] * (1 - fd) + HAZE[2] * fd];
+      var col = 'rgb(' + Math.round(rgb[0] + sh) + ',' + Math.round(rgb[1] + sh) + ',' + Math.round(rgb[2] + sh) + ')';
+      var top = base - h, capTop;
+      g.fillStyle = col; g.fillRect(x, top, w, h + H);
+      var style = r();
+      if (style < .28) { var cw = w * (.4 + r() * .3), ch = 8 + r() * h * .12; g.fillRect(x + (w - cw) / 2, top - ch, cw, ch); capTop = top - ch; }
+      else if (style < .4 && li > 0) { var tx = x + w * .3; g.fillRect(tx, top - 14, 10, 9); g.fillRect(tx + 1, top - 5, 1, 5); g.fillRect(tx + 8, top - 5, 1, 5); }
+      if (r() < .3) {
+        var ah = 10 + r() * 30, ax = x + w / 2, ay = (capTop !== undefined ? capTop : top);
+        g.fillRect(ax - .5, ay - ah, 1, ah);
+        beacons.push({ x: ax, y: ay - ah, ph: r() * 6 });
+      }
+      capTop = undefined;
+      if (day) { // sun from the right: lit edge, shaded edge
+        var k2 = 1 - fd * .7, lg = g.createLinearGradient(x, 0, x + w, 0);
+        lg.addColorStop(0, 'rgba(18,30,72,' + (.3 * k2) + ')'); lg.addColorStop(.55, 'rgba(18,30,72,0)'); lg.addColorStop(.7, 'rgba(255,238,205,0)'); lg.addColorStop(1, 'rgba(255,238,205,' + (.42 * k2) + ')');
+        g.fillStyle = lg; g.fillRect(x, top, w, h + H);
+      }
+      var m = cfg.ws + 1, step = cfg.ws + cfg.gap, vstep = cfg.ws * 1.5 + cfg.gap;
+      var cols = Math.floor((w - m * 2 + cfg.gap) / step), rows = Math.floor((h - m * 2) / vstep);
+      var p = cfg.lit * (.35 + r() * 1.3), ox = x + (w - (cols * step - cfg.gap)) / 2;
+      for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+        var on = r() < p, wc = WIN[Math.floor(r() * WIN.length)];
+        var wx = ox + i * step, wy = top + m + j * vstep;
+        if (on) litCount++;
+        if (day) { g.globalAlpha = (on ? .75 : .5) * (1 - fd * .55); g.fillStyle = on ? '#b4dcf6' : '#182a48'; g.fillRect(wx, wy, cfg.ws, cfg.ws * 1.5); }
+        else if (on) { g.globalAlpha = cfg.wa; g.fillStyle = wc; g.fillRect(wx, wy, cfg.ws, cfg.ws * 1.5); }
+        g.globalAlpha = 1;
+      }
+      x += w + r() * 5;
+    }
+    if (li < 3) { // haze so distant blocks sink into the sky
+      var hc = day ? '232,240,248,' : '217,100,122,', a = (day ? .42 : .28) - li * (day ? .12 : .08);
+      var hz = g.createLinearGradient(0, base - H * .3, 0, base); hz.addColorStop(0, 'rgba(' + hc + '0)'); hz.addColorStop(1, 'rgba(' + hc + a + ')');
+      g.globalCompositeOperation = 'source-atop'; g.fillStyle = hz; g.fillRect(0, 0, lw, H);
+      g.globalCompositeOperation = 'source-over';
+    }
+    return { c: c, beacons: beacons, cfg: cfg };
+  }
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    litCount = 0; buildSky(); layers = CFG.map(buildLayer);
+    var r = rng(55), i;
+    cars = []; var n = Math.max(18, Math.round(W / 26));
+    for (i = 0; i < n; i++) cars.push({ x: r() * W, dir: i % 2 ? 1 : -1, v: 40 + r() * 70, col: CARCOL[i % CARCOL.length] });
+    planes = [];
+    for (i = 0; i < 5; i++) planes.push({ x: r() * W, y: H * (.06 + r() * .3), dir: i % 2 ? 1 : -1, v: 18 + r() * 34, s: .7 + r() * 1.1, climb: (r() - .5) * .06, ph: r() * 6 });
+    helis = [];
+    for (i = 0; i < 1; i++) helis.push({ bx: W * .6, by: H * (.2 + r() * .22), rx: W * (.1 + r() * .12), sp: .12 + r() * .12, ph: r() * 6, s: 1 + r() * .5 });
+    if (reduce) frame(0);
+  }
+
+  function glowDot(x, y, r, col) {
+    cx.fillStyle = col; cx.globalAlpha = .18; cx.beginPath(); cx.arc(x, y, r * 3.2, 0, 7); cx.fill();
+    cx.globalAlpha = 1; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill();
+  }
+
+  function drawPlane(p, t, dt) {
+    p.x += p.dir * p.v * dt; p.y -= p.v * p.climb * dt;
+    if (p.x > W + 80) { p.x = -80; p.y = H * (.06 + Math.random() * .3); }
+    if (p.x < -80) { p.x = W + 80; p.y = H * (.06 + Math.random() * .3); }
+    cx.save(); cx.translate(p.x, p.y); cx.scale(p.dir * p.s, p.s);
+    if (day) { // contrail
+      var tr = cx.createLinearGradient(-90, 0, -10, 0); tr.addColorStop(0, 'rgba(255,255,255,0)'); tr.addColorStop(1, 'rgba(255,255,255,.75)');
+      cx.fillStyle = tr; cx.fillRect(-90, -.8, 80, 1.6);
+    }
+    cx.fillStyle = day ? '#f7f9fc' : '#15132e';
+    cx.beginPath(); cx.ellipse(0, 0, 11, 1.5, 0, 0, 7); cx.fill();
+    cx.beginPath(); cx.moveTo(-10, -1); cx.lineTo(-13.5, -6); cx.lineTo(-7, -1); cx.fill();
+    cx.beginPath(); cx.moveTo(2, 0); cx.lineTo(-6, 5.5); cx.lineTo(-3, 0); cx.fill();
+    if (day) { cx.fillStyle = '#7d8aa0'; cx.fillRect(-9, .6, 18, .6); }
+    cx.restore();
+    if (!day) {
+      glowDot(p.x - p.dir * 4 * p.s, p.y + 4 * p.s, 1, '#ff3b4a');
+      if (reduce || Math.sin(t * 5 + p.ph) > .7) glowDot(p.x + p.dir * 10 * p.s, p.y, 1.2, '#ffffff');
+    }
+  }
+
+  function drawHeli(h, t) {
+    var a = t * h.sp + h.ph, x = h.bx + Math.sin(a) * h.rx, y = h.by + Math.sin(a * 1.7) * 14;
+    var dir = Math.cos(a) >= 0 ? 1 : -1;
+    if (!day) { // searchlight
+      var g = cx.createLinearGradient(0, y, 0, y + H * .3); g.addColorStop(0, 'rgba(255,244,208,.28)'); g.addColorStop(1, 'rgba(255,244,208,0)');
+      cx.fillStyle = g; cx.beginPath(); cx.moveTo(x + dir * 4, y + 3); cx.lineTo(x + dir * 40 + 26, y + H * .3); cx.lineTo(x + dir * 40 - 26, y + H * .3); cx.fill();
+    }
+    cx.save(); cx.translate(x, y); cx.scale(dir * h.s, h.s);
+    cx.fillStyle = day ? '#1f2740' : '#0c0b1e';
+    cx.beginPath(); cx.ellipse(0, 0, 7, 3.6, 0, 0, 7); cx.fill();
+    cx.fillRect(-17, -1.2, 12, 1.8); cx.fillRect(-18, -4.5, 1.4, 6);
+    cx.fillRect(-.6, -6, 1.2, 3); cx.fillRect(-5, 4.6, 11, .9); cx.fillRect(-3, 3, .8, 2); cx.fillRect(3, 3, .8, 2);
+    var rw = reduce ? 14 : 5 + 10 * Math.abs(Math.sin(t * 28 + h.ph));
+    cx.globalAlpha = .75; cx.fillRect(-rw, -6.6, rw * 2, .9); cx.globalAlpha = 1;
+    if (day) { cx.fillStyle = '#bfe3ff'; cx.beginPath(); cx.ellipse(3.2, -.6, 2.6, 2, 0, 0, 7); cx.fill(); }
+    cx.restore();
+    if (!day && (reduce || Math.sin(t * 6 + h.ph) > 0)) glowDot(x - dir * 17 * h.s, y - 3 * h.s, 1.1, '#ff3b4a');
+    if (!day) glowDot(x + dir * 4 * h.s, y + 3 * h.s, 1.2, '#fff4d0');
+  }
+
+  function drawTrain(t) {
+    var y = H * .55, off = (px - .5) * -2 * PAD * .8;
+    cx.fillStyle = day ? '#56607c' : '#17142f'; cx.fillRect(0, y, W, 3);
+    for (var p = -PAD; p < W + PAD; p += 110) cx.fillRect(p + off, y, 4, H);
+    var carW = 52, n = 6, len = n * (carW + 3), span = W + len + 500;
+    var x = reduce ? W * .55 : ((t * 120) % span) - len;
+    for (var i = 0; i < n; i++) {
+      var cxx = x + i * (carW + 3);
+      cx.fillStyle = day ? '#d5dae4' : '#2a2548'; cx.fillRect(cxx, y - 11, carW, 11);
+      cx.fillStyle = day ? '#2c3a57' : '#ffe0a3'; for (var w = 0; w < 5; w++) cx.fillRect(cxx + 4 + w * 9.4, y - 8, 6.5, 4);
+      if (day) { cx.fillStyle = '#d9542b'; cx.fillRect(cxx, y - 3, carW, 1.5); }
+    }
+    if (!day) glowDot(x + len, y - 4, 1.4, '#fff4d0');
+  }
+
+  var last = 0, tick = 0;
+  function frame(ms) {
+    var t = ms / 1000, dt = Math.min(.05, t - last), i; last = t;
+    px += (mx - px) * .05;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.drawImage(sky, 0, 0, W, H);
+
+    for (i = 0; i < layers.length; i++) {
+      var L = layers[i], off = -PAD + (px - .5) * -2 * PAD * L.cfg.depth;
+      if (i === 2) { // aircraft pass in front of the distant towers
+        for (var a = 0; a < planes.length; a++) drawPlane(planes[a], t, dt);
+        for (var b2 = 0; b2 < helis.length; b2++) drawHeli(helis[b2], t);
+      }
+      if (i === 3) drawTrain(t);
+      cx.drawImage(L.c, off, 0, W + PAD * 2, H);
+      if (!day) for (var b = 0; b < L.beacons.length; b++) {
+        var bc = L.beacons[b];
+        if (reduce || Math.sin(t * 2.2 + bc.ph) > .2) glowDot(bc.x + off, bc.y, i < 2 ? .9 : 1.5, '#ff3b4a');
+      }
+    }
+
+    // avenue
+    var ry = H * .93;
+    cx.fillStyle = day ? '#2e3140' : '#0a0918'; cx.fillRect(0, ry, W, H - ry);
+    cx.fillStyle = day ? 'rgba(255,255,255,.35)' : 'rgba(255,190,92,.22)'; cx.fillRect(0, ry, W, 1);
+    for (i = 0; i < cars.length; i++) {
+      var car = cars[i]; car.x += car.dir * car.v * dt;
+      if (car.x > W + 20) car.x = -20; if (car.x < -20) car.x = W + 20;
+      var y = ry + (car.dir > 0 ? (H - ry) * .62 : (H - ry) * .3);
+      if (day) { cx.fillStyle = 'rgba(0,0,0,.35)'; cx.fillRect(car.x - 5.5, y + 2, 11, 1.5); cx.fillStyle = car.col; cx.fillRect(car.x - 5.5, y - 2.5, 11, 4.5); }
+      else { var lc = car.dir > 0 ? '#fff4d0' : '#ff3d3d'; glowDot(car.x, y, 1.6, lc); glowDot(car.x - car.dir * 5, y, 1.6, lc); }
+    }
+
+    if (tick++ % 30 === 0 || reduce) {
+      litEl.textContent = litCount.toLocaleString();
+      var d = new Date(); clockEl.textContent = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('pointermove', function (e) { mx = e.clientX / W; });
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resize, 150); });
+
+  var status = document.getElementById('status');
+  document.querySelectorAll('.bar').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); status.textContent = a.dataset.msg; });
+  });
+
+  var modeBtn = document.getElementById('mode'), modeLabel = document.getElementById('mode-label');
+  function applyMode() {
+    document.documentElement.classList.toggle('day', day);
+    modeLabel.textContent = day ? 'Switch to night' : 'Switch to day';
+  }
+  modeBtn.addEventListener('click', function () {
+    day = !day; applyMode(); resize();
+    try { localStorage.setItem('cityMode', day ? 'day' : 'night'); } catch (e) {}
+  });
+
+  applyMode(); resize();
+  if (!reduce) requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
