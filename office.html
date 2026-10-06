@@ -45,6 +45,16 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 .talk { margin-top: auto; align-self: center; width: min(100%, 720px); box-sizing: border-box; padding: 14px 16px; }
 .talk b { display: block; font-family: var(--pixel); font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
 #status { margin: 0; font-family: var(--pixel); font-size: 19px; line-height: 1.4; min-height: 2.8em; }
+.hud.scene .top { visibility: hidden; }
+.tbtn { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+.tbtn[hidden], .card[hidden] { display: none; }
+.sbtn { min-height: 44px; padding: 8px 16px; font: 600 17px var(--pixel); color: var(--paper); background: #2a2650; border: 2px solid var(--ink); box-shadow: inset -2px -2px 0 #15122e, inset 2px 2px 0 #3d3870; cursor: pointer; }
+.sbtn.go { background: var(--gold); color: var(--gold-ink); box-shadow: inset -2px -2px 0 #c98a2a, inset 2px 2px 0 #ffe0a3; }
+.sbtn.big { font-size: 20px; padding: 12px 24px; }
+.sbtn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.card { position: fixed; inset: 0; z-index: 10; background: #07060f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; text-align: center; }
+.card p { margin: 0; max-width: 28ch; font-family: var(--pixel); font-size: clamp(20px, 3.4vw, 30px); line-height: 1.3; }
+.card p.floor { font-weight: 700; font-size: clamp(44px, 9vw, 88px); color: var(--gold); line-height: 1; }
 @media (max-width: 767px) {
   .hud { padding-block: 10px; padding-inline: 10px; gap: 10px; }
   .menu { width: 100%; padding: 10px; }
@@ -61,7 +71,7 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     <nav class="menu box" aria-label="Game sections">
       <a class="brand" href="index.html">CORNER <em>OFFICE</em></a>
       <div class="items">
-        <button type="button" data-name="Daily Management" aria-pressed="false">Daily Management</button>
+        <button type="button" data-name="Career Mode" aria-pressed="false">Career Mode</button>
         <button type="button" data-name="Competitions" aria-pressed="false">Competitions</button>
         <button type="button" data-name="Marketplace" aria-pressed="false">Marketplace</button>
         <button type="button" data-name="Office" aria-pressed="false">Office</button>
@@ -76,9 +86,15 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     </div>
   </div>
   <div class="talk box">
-    <b>MarketMaven</b>
+    <b id="who">MarketMaven</b>
     <p id="status" role="status" aria-live="polite">Not much of a view from the first floor. But everyone starts somewhere.</p>
+    <div class="tbtn" id="sceneBtns" hidden><button type="button" class="sbtn" id="sceneSkip">SKIP</button><button type="button" class="sbtn go" id="sceneNext">NEXT</button></div>
   </div>
+</div>
+<div class="card" id="floorCard" hidden>
+  <p class="floor">FLOOR 1</p>
+  <p>Trade for three business days and beat the market to climb the ladder past Nepo Baby.</p>
+  <button type="button" class="sbtn go big" id="floorGo">START TRADING</button>
 </div>
 
 <script>
@@ -98,77 +114,142 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   var F = { A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', H: '101101111101101', I: '111010010010111', K: '101101110101101', L: '100100100100111', N: '110101101101101', P: '110101110100100', R: '110101110101101', S: '011100010001110', T: '111010010010010', W: '101101111111101', X: '101101010101101', Y: '101101010010010' };
   function text(s, x, y, c) { g.fillStyle = c; var px = Math.round(x * 2), py = Math.round(y * 2); for (var i = 0; i < s.length; i++, px += 4) { var m = F[s[i]]; if (!m) continue; for (var k = 0; k < 15; k++) if (m[k] === '1') g.fillRect(px + k % 3, py + (k / 3 | 0), 1, 1); } }
 
+  function walker(px, fy2, shirt, pants, step, hat) {
+    R(px + .6, fy2 - 7, 1.6, 1.6, '#e4ad7c'); if (hat) R(px + .4, fy2 - 7.6, 2, .8, '#f6f2e6'); else R(px + .6, fy2 - 7.2, 1.6, .6, '#3b2a20');
+    R(px + .3, fy2 - 5.4, 2.2, 2.8, shirt);
+    R(px + .4, fy2 - 2.6, .9, 2.6 - (step ? .5 : 0), pants); R(px + 1.5, fy2 - 2.6, .9, 2.6 - (step ? 0 : .5), pants);
+  }
+  // one street shared by both windows: the same car and walkers pass each in turn
+  function street(y, t) {
+    if (reduce) { walker(L + 30, y + 23, '#c8463a', '#2c3550', 0, false); walker(L + 62, y + 23, '#3f8a63', '#4a3a2c', 1, false); return; }
+    var st = Math.floor(t * 4) % 2;
+    walker(L - 6 + ((t * 2.6) % 110), y + 23, '#c8463a', '#2c3550', st, false);
+    walker(L + 100 - ((t * 2.1 + 30) % 112), y + 23, '#3f8a63', '#4a3a2c', 1 - st, false);
+    walker(L - 6 + ((t * 3.3 + 55) % 110), y + 23.2, '#e8b84a', '#3a3d48', st, false);
+    var c2 = L - 26 + ((t * 13) % 190);
+        shadow(c2 + 10, y + 29, 10, 1, .35);
+        R(c2, y + 22, 20, 5.5, O); R(c2 + .5, y + 22.5, 19, 4.5, '#d14a3c'); R(c2 + .5, y + 22.5, 19, 1, '#e86a58');
+        R(c2 + 3.5, y + 18.5, 12, 4, O); R(c2 + 4, y + 19, 11, 3.5, '#d14a3c'); R(c2 + 5, y + 19.5, 4, 2.5, '#9fd8ff'); R(c2 + 10, y + 19.5, 4, 2.5, '#9fd8ff'); R(c2 + 5, y + 19.5, 1.5, 1, '#e3f4ff');
+        R(c2 + 18.5, y + 23.5, 1, 1.5, '#ffe9a8'); R(c2 + .5, y + 23.5, 1, 1.5, '#8a1f18');
+        [3, 13.5].forEach(function (o) { g.fillStyle = O; g.beginPath(); g.arc((c2 + o + 1.75) * 2, (y + 27.5) * 2, 3.6, 0, 7); g.fill(); g.fillStyle = '#8f95a3'; g.fillRect(Math.round((c2 + o + 1.25) * 2), Math.round((y + 27) * 2), 2, 2); });
+  }
+
   function win(x, y, kind, t) {
     var w = 36, h = 30, i, j;
     R(x - 3, y - 3, w + 6, h + 6, O); R(x - 2.5, y - 2.5, w + 5, h + 5, '#f4eddb'); R(x - 2.5, y + h + 1.5, w + 5, 1, '#d6cdb6'); R(x - .5, y - .5, w + 1, h + 1, O);
     g.save(); g.beginPath(); g.rect(x * 2, y * 2, w * 2, h * 2); g.clip();
     if (kind === 0) {
-      R(x, y, w, h, '#a65444');
-      for (j = 0; j < h; j += 3) { for (i = -4 + (j / 3 % 2) * 3; i < w; i += 6) { R(x + i, y + j, 5.5, 2.5, ((i * 3 + j * 5) % 7 < 2) ? '#8f4337' : ((i + j) % 5 === 0 ? '#b96553' : '#a65444')); } R(x, y + j + 2.5, w, .5, '#d8c2ab'); for (i = -4 + (j / 3 % 2) * 3; i < w; i += 6) R(x + i + 5.5, y + j, .5, 2.5, '#d8c2ab'); }
-      R(x + 26, y, 3.5, h, '#596070'); R(x + 26, y, 1, h, '#9aa2b3'); R(x + 29, y, .5, h, '#3a4050'); R(x + 25, y + 19, 5.5, 1.5, '#3a4050');
-      box(x + 4, y + 14, 13, 9, '#c3c7cf'); R(x + 4, y + 14, 13, 1, '#e3e6ea'); for (j = 0; j < 5; j++) R(x + 5.5, y + 16.5 + j * 1.2, 10, .5, '#737989'); R(x + 14.5, y + 21, 1.5, 1, '#5fe08a');
-      R(x, y, w, h, 'rgba(30,20,50,.18)');
+      R(x, y, w, 21, '#a8a39a'); R(x, y, w, 3, '#8b867c');
+      for (j = 4; j < 20; j += 4) R(x, y + j, w, .5, '#9a958b');
+      // shop front across the street
+      box(x + 23, y + 9, 12, 12, '#4f6a7a'); R(x + 24, y + 10.5, 6, 6, '#9fd8ff'); R(x + 24, y + 10.5, 2, 6, '#c9ecff'); R(x + 31, y + 10.5, 3, 10.5, '#3a2c22'); R(x + 33.2, y + 15.5, .5, 1, '#e8b84a');
+      for (i = 0; i < 12; i += 2) { R(x + 23 + i, y + 7, 1, 2, '#d14a3c'); R(x + 24 + i, y + 7, 1, 2, '#f6f2e6'); } R(x + 22.5, y + 6.5, 13, .5, O); R(x + 22.5, y + 9, 13, .5, O);
+      R(x, y + 21, w, 2.5, '#cfc9b4'); R(x, y + 23, w, .5, '#8f8a78'); R(x, y + 23.5, w, 6.5, '#454a59'); for (i = 0; i < w; i += 7) R(x + i, y + 26.5, 4, .5, '#d9d4c0');
+      // lamppost
+      R(x + 20.5, y + 3, 1, 19, '#2a2d37'); R(x + 20, y + 21, 2, 1, '#2a2d37'); R(x + 20.5, y + 3, 4, .8, '#2a2d37'); R(x + 23.5, y + 3.8, 2, 1.4, '#2a2d37'); R(x + 23.8, y + 5.2, 1.4, .8, '#ffe9a8');
+      // hot dog stand: umbrella, cart, vendor, customer
+      R(x + 10.8, y + 12.5, .5, 6, '#3a3d48');
+      quad([x + 5, y + 12.8, x + 11, y + 8.6, x + 17, y + 12.8], O); quad([x + 5.8, y + 12.5, x + 11, y + 9, x + 16.2, y + 12.5], '#d14a3c');
+      quad([x + 8.4, y + 12.5, x + 11, y + 9, x + 9.9, y + 12.5], '#f6d25a'); quad([x + 13.6, y + 12.5, x + 11, y + 9, x + 12.1, y + 12.5], '#f6d25a');
+      walker(x + 12.4, y + 22.6, '#f6f2e6', '#3a3d48', 0, true);
+      box(x + 6.5, y + 17.5, 9, 4.2, '#d14a3c'); R(x + 6.5, y + 17.5, 9, 1, '#f6f2e6'); R(x + 6.5, y + 16.8, 9, .7, '#8f95a3');
+      R(x + 8, y + 19.3, 3.4, .9, '#e8b84a'); R(x + 8.4, y + 19.5, 2.6, .5, '#b5452f');
+      g.fillStyle = O; g.beginPath(); g.arc((x + 8.2) * 2, (y + 22.4) * 2, 2.6, 0, 7); g.arc((x + 13.8) * 2, (y + 22.4) * 2, 2.6, 0, 7); g.fill();
+      walker(x + 3.6, y + 23, '#5a8fd0', '#2c3550', 0, false);
+      street(y, t);
+      R(x, y, w, h, 'rgba(30,20,50,.06)');
     } else {
       R(x, y, w, 21, '#9aa0ad'); R(x, y, w, 3, '#7c8291');
       box(x + 2, y + 9, 18, 12, '#727988'); for (j = 0; j < 12; j += 1.5) R(x + 2, y + 9 + j, 18, .5, '#565c6a'); R(x + 1, y + 7.5, 20, 1.5, '#3f8a63'); R(x + 1, y + 8.5, 20, .5, '#2c6a49');
       box(x + 23, y + 11, 8, 10, '#5a4a3c'); R(x + 24, y + 12, 6, 4, '#24303f'); R(x + 24, y + 12, 2, 4, '#3d5068'); R(x + 29, y + 17, 1, 1, '#e8b84a');
       R(x, y + 21, w, 2.5, '#cfc9b4'); R(x, y + 23, w, .5, '#8f8a78'); R(x, y + 23.5, w, 6.5, '#454a59'); for (i = 0; i < w; i += 7) R(x + i, y + 26.5, 4, .5, '#d9d4c0');
       R(x + 32.5, y, 1, 21.5, '#2a2d37'); R(x + 31, y + 2, 4, 1, '#2a2d37');
-      if (!reduce) {
-        var c2 = x - 22 + ((t * 13) % 160);
-        shadow(c2 + 10, y + 29, 10, 1, .35);
-        R(c2, y + 22, 20, 5.5, O); R(c2 + .5, y + 22.5, 19, 4.5, '#d14a3c'); R(c2 + .5, y + 22.5, 19, 1, '#e86a58');
-        R(c2 + 3.5, y + 18.5, 12, 4, O); R(c2 + 4, y + 19, 11, 3.5, '#d14a3c'); R(c2 + 5, y + 19.5, 4, 2.5, '#9fd8ff'); R(c2 + 10, y + 19.5, 4, 2.5, '#9fd8ff'); R(c2 + 5, y + 19.5, 1.5, 1, '#e3f4ff');
-        R(c2 + 18.5, y + 23.5, 1, 1.5, '#ffe9a8'); R(c2 + .5, y + 23.5, 1, 1.5, '#8a1f18');
-        [3, 13.5].forEach(function (o) { g.fillStyle = O; g.beginPath(); g.arc((c2 + o + 1.75) * 2, (y + 27.5) * 2, 3.6, 0, 7); g.fill(); g.fillStyle = '#8f95a3'; g.fillRect(Math.round((c2 + o + 1.25) * 2), Math.round((y + 27) * 2), 2, 2); });
-      }
+      street(y, t);
     }
     quad([x + 21, y, x + 27, y, x + 15, y + h, x + 9, y + h], 'rgba(255,255,255,.13)'); quad([x + 29, y, x + 31, y, x + 19, y + h, x + 17, y + h], 'rgba(255,255,255,.1)');
     g.restore();
-    for (j = 0; j < 10; j += 1.5) { R(x, y + j, w, 1, '#f6f0df'); R(x, y + j + 1, w, .5, '#b3a78a'); } R(x, y + 10, w, 1, '#e3dac4'); R(x, y + 11, w, .5, 'rgba(0,0,0,.25)');
-    R(x + w - 3.5, y + 11, .5, 9, '#efe7d2'); R(x + w - 4, y + 20, 1.5, 1.5, '#efe7d2');
+    for (j = 0; j < 4.5; j += 1.5) { R(x, y + j, w, 1, '#f6f0df'); R(x, y + j + 1, w, .5, '#b3a78a'); } R(x, y + 4.5, w, 1, '#e3dac4'); R(x, y + 5.5, w, .5, 'rgba(0,0,0,.25)');
+    R(x + w - 3.5, y + 5.5, .5, 9, '#efe7d2'); R(x + w - 4, y + 14.5, 1.5, 1.5, '#efe7d2');
     R(x + 17, y, 2, h, '#f4eddb'); R(x + 16.5, y, .5, h, O); R(x + 19, y, .5, h, O);
     box(x - 5, y + h + 3, w + 10, 2, '#fbf6e8'); R(x - 5, y + h + 4.5, w + 10, .5, '#cfc6ae'); R(x - 4, y + h + 5.5, w + 8, 1.5, 'rgba(60,45,20,.18)');
   }
 
-  function investor(x, y, bob, blink) {
-    var d = bob ? .5 : 0, sk = '#e4ad7c', skD = '#c08a60', sh = '#f8f5ec', shD = '#d2cfd8', pa = '#c9a06b', paD = '#a47d4c';
-    // legs and shoes
-    R(x + 3, y + 26, 10, 17.5, O); R(x + 3.5, y + 26.5, 9, 4.5, pa);
-    R(x + 3.5, y + 31, 4.1, 12, pa); R(x + 8.4, y + 31, 4.1, 12, pa);
-    R(x + 6.6, y + 27, 1, 16, paD); R(x + 11.5, y + 27, 1, 16, paD); R(x + 5, y + 28, .5, 14.5, '#dcb681'); R(x + 9.9, y + 28, .5, 14.5, '#dcb681');
-    R(x + 3.5, y + 42.4, 4.1, .6, paD); R(x + 8.4, y + 42.4, 4.1, .6, paD);
-    [2.6, 8.4].forEach(function (o) { R(x + o - .5, y + 42.9, 6, 3.1, O); R(x + o, y + 43.4, 5, 1.7, '#7d4a28'); R(x + o + .5, y + 43.4, 2.2, .5, '#a36a3d'); R(x + o, y + 45.1, 5, .5, '#2a180c'); });
-    y += d;
-    // arms and hands
-    [[.8, 1], [12.2, 0]].forEach(function (a) {
-      R(x + a[0] - .5, y + 14.3, 4, 14.6, O); R(x + a[0], y + 14.8, 3, 10.4, sh); R(x + a[0] + (a[1] ? 2.4 : 0), y + 15.5, .6, 9.5, shD);
-      R(x + a[0], y + 24.4, 3, .8, shD); R(x + a[0] + .3, y + 25.6, 2.4, 2.8, sk); R(x + a[0] + .3, y + 27.6, 2.4, .8, skD); R(x + a[0] + 1.4, y + 26.6, .4, 1.6, skD);
-    });
-    // shirt
-    R(x + 3, y + 13.4, 10, 12.2, O); R(x + 3.5, y + 13.9, 9, 11.2, sh); R(x + 11, y + 14.5, 1.5, 10.6, '#e6e2d8'); R(x + 3.5, y + 14.5, .8, 10.6, '#e6e2d8');
-    R(x + 7.75, y + 15.5, .5, 9.6, shD); for (var b = 0; b < 4; b++) R(x + 7.6, y + 16.6 + b * 2.3, .8, .6, '#9ea1b3');
-    R(x + 9.4, y + 17.4, 2.2, .4, shD); R(x + 9.4, y + 17.4, .4, 2.4, shD); R(x + 11.2, y + 17.4, .4, 2.4, shD); R(x + 9.4, y + 19.6, 2.2, .4, shD);
-    R(x + 4.5, y + 22.5, 2.5, .4, shD); R(x + 9.5, y + 23.2, 2, .4, shD);
-    // neck and collar
-    R(x + 6.2, y + 11.5, 3.6, 2.6, skD); R(x + 6.2, y + 11.5, 3.6, .8, '#a97450');
-    quad([x + 4.8, y + 13.2, x + 7, y + 12.8, x + 8, y + 16, x + 5.6, y + 15.6], O); quad([x + 5.3, y + 13.5, x + 6.8, y + 13.3, x + 7.6, y + 15.4, x + 5.9, y + 15.2], '#ffffff');
-    quad([x + 11.2, y + 13.2, x + 9, y + 12.8, x + 8, y + 16, x + 10.4, y + 15.6], O); quad([x + 10.7, y + 13.5, x + 9.2, y + 13.3, x + 8.4, y + 15.4, x + 10.1, y + 15.2], '#efece3');
-    // belt
-    R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, '#402a18'); R(x + 7.1, y + 24.9 - d, 1.8, 1.6, '#e8b84a'); R(x + 7.6, y + 25.4 - d, .8, .6, '#402a18');
-    // head
-    R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
-    g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
-    g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
-    g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
-    R(x + 11.2, y + 3, 2, 9, 'rgba(160,100,60,.25)'); R(x + 2, y, 12, 4.2, '#3b2a20'); R(x + 2, y + 4.2, 1.6, 2.2, '#3b2a20'); R(x + 12.4, y + 4.2, 1.6, 2.2, '#3b2a20'); R(x + 9.5, y + 4.2, 3, .8, '#3b2a20'); R(x + 4.5, y + 1.4, 4.5, .6, '#6a4c38');
-    g.restore();
-    g.fillStyle = '#3b2a20'; g.beginPath(); g.ellipse((x + 8) * 2, (y + 3.2) * 2, 10.8, 6.4, 0, Math.PI, 0); g.fill(); R(x + 4.6, y + 1.2, 4, .5, '#6a4c38');
-    R(x + 4.8, y + 5.2, 2.4, .5, '#2b1e16'); R(x + 8.8, y + 5.2, 2.4, .5, '#2b1e16');
-    if (blink) { R(x + 5, y + 6.8, 2, .4, '#2b1e16'); R(x + 9, y + 6.8, 2, .4, '#2b1e16'); }
-    else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.8, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 9.6, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 5, y + 6, 2, .3, '#2b1e16'); R(x + 9, y + 6, 2, .3, '#2b1e16'); }
-    R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD); R(x + 6.6, y + 10.2, 2.8, .5, '#96503f'); R(x + 7, y + 10.7, 2, .3, skD);
+  /* One character renderer shared by the character creator and the office. Units are room units (2 fine pixels). */
+  function makePerson(g, O) {
+    function R(x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x * 2), Math.round(y * 2), Math.max(1, Math.round(w * 2)), Math.max(1, Math.round(h * 2))); }
+    function quad(p, c) { g.fillStyle = c; g.beginPath(); g.moveTo(p[0] * 2, p[1] * 2); for (var i = 2; i < p.length; i += 2) g.lineTo(p[i] * 2, p[i + 1] * 2); g.fill(); }
+    function dot(x, y, r, c) { g.fillStyle = c; g.beginPath(); g.arc(x * 2, y * 2, r * 2, 0, 7); g.fill(); }
+    var SKIN = [['#f3cfae', '#d9a985'], ['#e0aa7a', '#bd875c'], ['#b87a4b', '#935c34'], ['#7a4a2c', '#5c3520']];
+    var HAIR = [['#1c1714', '#3d342d'], ['#4a3020', '#70503a'], ['#d9b45a', '#f2da93'], ['#9a3b1e', '#c75e33']];
+    var SHIRT = [['#f8f5ec', '#d2cfd8', '#e6e2d8'], ['#a3a9b6', '#7f8696', '#929aa8'], ['#30323e', '#1e2029', '#272934']];
+    var PANTS = [['#ece6d6', '#cfc7b2', '#f7f2e6'], ['#c9a06b', '#a47d4c', '#dcb681'], ['#3f5f9a', '#2f4a7c', '#5676b3']];
+    var SHOES = [['#7d4a28', '#a36a3d', '#2a180c'], ['#2b2b34', '#4a4a58', '#0e0e12']];
+    var SUIT = ['#2a2f55', '#1d2140', '#232848'];
+    return function (x, y, o, bob, blink) {
+      var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], f = o.gender === 'f';
+      var sh = SHIRT[o.suit ? 0 : o.shirt], pa = o.suit ? ['#2a2f55', '#1d2140', '#3a4070'] : PANTS[o.pants], so = SHOES[o.shoes], top = o.suit ? SUIT : sh;
+      // legs and shoes
+      R(x + 3, y + 26, 10, 17.5, O); R(x + 3.5, y + 26.5, 9, 4.5, pa[0]); R(x + 3.5, y + 31, 4.1, 12, pa[0]); R(x + 8.4, y + 31, 4.1, 12, pa[0]);
+      R(x + 6.6, y + 27, 1, 16, pa[1]); R(x + 11.5, y + 27, 1, 16, pa[1]); R(x + 5, y + 28, .5, 14.5, pa[2]); R(x + 9.9, y + 28, .5, 14.5, pa[2]);
+      R(x + 3.5, y + 42.4, 4.1, .6, pa[1]); R(x + 8.4, y + 42.4, 4.1, .6, pa[1]);
+      [2.6, 8.4].forEach(function (q) { R(x + q - .5, y + 42.9, 6, 3.1, O); R(x + q, y + 43.4, 5, 1.7, so[0]); R(x + q + .5, y + 43.4, 2.2, .5, so[1]); R(x + q, y + 45.1, 5, .5, so[2]); });
+      y += d;
+      if (o.hair === 2) { R(x + 1.6, y + 5, 12.8, 11, O); R(x + 2.1, y + 5, 11.8, 10.5, hc); }
+      // arms and hands
+      [[f ? 1.2 : .8, 1], [f ? 11.8 : 12.2, 0]].forEach(function (a) {
+        R(x + a[0] - .5, y + 14.3, 4, 14.6, O); R(x + a[0], y + 14.8, 3, 10.4, top[0]); R(x + a[0] + (a[1] ? 2.4 : 0), y + 15.5, .6, 9.5, top[1]);
+        R(x + a[0], y + 24.4, 3, .8, o.suit ? sh[0] : top[1]); R(x + a[0] + .3, y + 25.6, 2.4, 2.8, sk); R(x + a[0] + .3, y + 27.6, 2.4, .8, skD); R(x + a[0] + 1.4, y + 26.6, .4, 1.6, skD);
+      });
+      // torso
+      R(x + 3, y + 13.4, 10, 12.2, O); R(x + 3.5, y + 13.9, 9, 11.2, top[0]); R(x + 11, y + 14.5, 1.5, 10.6, top[2]); R(x + 3.5, y + 14.5, .8, 10.6, top[2]);
+      if (o.suit) {
+        quad([x + 5.8, y + 13.9, x + 10.2, y + 13.9, x + 8, y + 21], sh[0]); R(x + 7.6, y + 15, .8, 5.2, '#b3322c'); R(x + 7.4, y + 14.4, 1.2, 1, '#8f241f');
+        quad([x + 5.8, y + 13.9, x + 8, y + 21, x + 6.2, y + 19.6, x + 4.8, y + 15.2], '#3a4070'); quad([x + 10.2, y + 13.9, x + 8, y + 21, x + 9.8, y + 19.6, x + 11.2, y + 15.2], '#3a4070');
+        R(x + 7.9, y + 21, .3, 4.1, top[1]); R(x + 7.7, y + 22, .7, .6, '#c9a54a'); R(x + 7.7, y + 23.6, .7, .6, '#c9a54a'); R(x + 9.6, y + 17.6, 2, .5, '#f8f5ec');
+      } else {
+        R(x + 7.75, y + 15.5, .5, 9.6, sh[1]); for (var b = 0; b < 4; b++) R(x + 7.6, y + 16.6 + b * 2.3, .8, .6, o.shirt === 2 ? '#6b6f80' : '#9ea1b3');
+        R(x + 9.4, y + 17.4, 2.2, .4, sh[1]); R(x + 9.4, y + 17.4, .4, 2.4, sh[1]); R(x + 11.2, y + 17.4, .4, 2.4, sh[1]); R(x + 9.4, y + 19.6, 2.2, .4, sh[1]);
+        R(x + 4.5, y + 22.5, 2.5, .4, sh[1]); R(x + 9.5, y + 23.2, 2, .4, sh[1]);
+      }
+      // neck and collar
+      R(x + 6.2, y + 11.5, 3.6, 2.6, skD); R(x + 6.2, y + 11.5, 3.6, .8, 'rgba(40,15,5,.25)');
+      quad([x + 4.8, y + 13.2, x + 7, y + 12.8, x + 8, y + 16, x + 5.6, y + 15.6], O); quad([x + 5.3, y + 13.5, x + 6.8, y + 13.3, x + 7.6, y + 15.4, x + 5.9, y + 15.2], sh[0]);
+      quad([x + 11.2, y + 13.2, x + 9, y + 12.8, x + 8, y + 16, x + 10.4, y + 15.6], O); quad([x + 10.7, y + 13.5, x + 9.2, y + 13.3, x + 8.4, y + 15.4, x + 10.1, y + 15.2], sh[2]);
+      // belt, or jacket hem
+      if (o.suit) { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, top[1]); }
+      else { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, o.shoes ? '#1c1c22' : '#402a18'); R(x + 7.1, y + 24.9 - d, 1.8, 1.6, '#e8b84a'); R(x + 7.6, y + 25.4 - d, .8, .6, '#402a18'); }
+      // head
+      R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
+      g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
+      g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
+      g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
+      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)'); R(x + 2, y, 12, 4.2, hc);
+      if (o.hair === 0) { R(x + 2, y + 4.2, 1.6, 2.2, hc); R(x + 12.4, y + 4.2, 1.6, 2.2, hc); R(x + 9.5, y + 4.2, 3, .8, hc); }
+      else if (o.hair === 3) { R(x + 2, y + 4.2, 2, 3, hc); R(x + 12, y + 4.2, 2, 3, hc); }
+      else { R(x + 2, y + 4.2, 2.2, 9, hc); R(x + 11.8, y + 4.2, 2.2, 9, hc); R(x + 3.6, y + 4.2, 6.4, 1, hc); }
+      g.restore();
+      g.fillStyle = hc; g.beginPath(); g.ellipse((x + 8) * 2, (y + 3.2) * 2, 10.8, 6.4, 0, Math.PI, 0); g.fill();
+      if (o.hair === 3) { [[3, 3.2], [5, 1.2], [8, .4], [11, 1.2], [13, 3.2], [2.2, 5.6], [13.8, 5.6], [6.5, 2.4], [9.6, 2.4]].forEach(function (c) { dot(x + c[0], y + c[1], 2.3, hc); }); [[5, .8], [8.4, 0], [11.4, 1.2], [3, 3]].forEach(function (c) { dot(x + c[0], y + c[1], .6, hh); }); }
+      else R(x + 4.6, y + 1.2, 4, .5, hh);
+      if (o.hair === 1) { R(x + 1.3, y + 3.2, 2, 9, hc); R(x + 12.7, y + 3.2, 2, 9, hc); R(x + 1.3, y + 11.6, 2.4, .8, hh); R(x + 12.3, y + 11.6, 2.4, .8, hh); }
+      if (o.hair === 2) { R(x + 1.1, y + 3.2, 2.4, 14, hc); R(x + 12.5, y + 3.2, 2.4, 14, hc); R(x + 1.6, y + 6, .5, 10, hh); R(x + 13.9, y + 6, .5, 10, hh); }
+      var br = o.hairColor > 1 ? hc : '#2b1e16';
+      R(x + 4.8, y + 5.2, 2.4, .5, br); R(x + 8.8, y + 5.2, 2.4, .5, br);
+      if (blink) { R(x + 5, y + 6.8, 2, .4, '#2b1e16'); R(x + 9, y + 6.8, 2, .4, '#2b1e16'); }
+      else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.8, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 9.6, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 5, y + 6, 2, .3, '#2b1e16'); R(x + 9, y + 6, 2, .3, '#2b1e16'); if (f) { R(x + 4.5, y + 5.8, .6, .4, '#2b1e16'); R(x + 10.9, y + 5.8, .6, .4, '#2b1e16'); } }
+      R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
+      if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
+      R(x + 7, y + 10.9, 2, .3, skD);
+    };
   }
+  function loadChar() {
+    var c = { gender: 'm', skin: 1, hair: 0, hairColor: 1, shirt: 0, pants: 1, shoes: 0 };
+    try { var o = JSON.parse(localStorage.getItem('cornerOfficeCharacter') || 'null'); if (o) for (var k in c) if (o[k] !== undefined) c[k] = o[k]; } catch (e) {}
+    return c;
+  }
+
+  var person = makePerson(g, O), CHAR = loadChar();
+  var NEPO = { gender: 'm', skin: 0, hair: 2, hairColor: 2, shirt: 0, pants: 0, shoes: 1, suit: true }, scene = { on: false, nx: -20, arrived: false, i: -1 };
 
   function draw(ms) {
     var t = ms / 1000, i, j;
@@ -260,7 +341,13 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     // investor
     var px = L + 98, bob = !reduce && Math.floor(t * 1.5) % 2 === 1, blink = !reduce && (t % 4) > 3.86;
     shadow(px + 8, fy + 11, 10, 2, .34);
-    investor(px, fy + 10.4 - 46, bob, blink);
+    if (scene.on) {
+      var tg = L + 72;
+      if (!scene.arrived) { scene.nx = Math.min(tg, scene.nx + .55); if (scene.nx >= tg) { scene.arrived = true; scene.i = 0; showLine(); } } else scene.nx = tg;
+      shadow(scene.nx + 8, fy + 11, 10, 2, .34);
+      person(scene.nx, fy + 10.4 - 46, NEPO, scene.arrived ? !bob : Math.floor(t * 7) % 2 === 1, !reduce && (t % 5) > 4.85);
+    }
+    person(px, fy + 10.4 - 46, CHAR, bob, blink);
 
     // room lighting: soft vignette
     var vg = g.createRadialGradient(UW, UH * .9, UH * .7, UW, UH * .9, Math.max(UW, UH) * 1.5); vg.addColorStop(0, 'rgba(14,10,36,0)'); vg.addColorStop(1, 'rgba(14,10,36,.42)'); g.fillStyle = vg; g.fillRect(0, 0, UW * 2, UH * 2);
@@ -280,11 +367,36 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resize, 120); });
   resize(); if (!reduce) requestAnimationFrame(loop);
 
-  var st = document.getElementById('status'), btns = document.querySelectorAll('.items button');
+  var st = document.getElementById('status'), btns = document.querySelectorAll('.items button'), who = document.getElementById('who'), me = who.textContent;
+  var LINES = [
+    ['Nepo Baby', 'Welcome to the jungle.'],
+    ['Nepo Baby', "You sit here on the first floor. If you look out your window, you can see your lovely view of the world's shittiest hot dog stand."],
+    ['Nepo Baby', 'This is the show, and I am going to dominate you.'],
+    [me, 'Who are you?'],
+    ['Nepo Baby', "I'm Nepo Baby. You'll probably never see me, because I sit all the way up on Floor 5. And I'm on the fast track to Floor 10."],
+    ['Nepo Baby', "I just wanted to come and welcome you to the game. You probably won't last. You'll be working at the hot dog stand soon."],
+    [me, "I am the game, pal. And I can't wait to dominate you."],
+    ['Nepo Baby', 'OK, chief. Have fun down here with the rats.']
+  ];
+  function met() { try { return localStorage.getItem('cornerOfficeMetNepo') === '1'; } catch (e) { return false; } }
+  function showLine() { var l = LINES[scene.i]; who.textContent = l[0]; st.textContent = l[1]; document.getElementById('sceneNext').focus({ preventScroll: true }); }
+  function startScene() {
+    scene.on = true; scene.arrived = false; scene.i = -1; scene.nx = -20;
+    document.querySelector('.hud').classList.add('scene'); document.getElementById('sceneBtns').hidden = false;
+    who.textContent = '...'; st.textContent = 'Someone walks into your office.';
+    if (reduce) { scene.arrived = true; scene.i = 0; showLine(); draw(0); }
+  }
+  function endScene() { document.getElementById('floorCard').hidden = false; document.getElementById('floorGo').focus(); }
+  document.getElementById('sceneNext').addEventListener('click', function () {
+    if (!scene.arrived) { scene.arrived = true; scene.i = 0; showLine(); } else if (++scene.i >= LINES.length) endScene(); else showLine();
+    if (reduce) draw(0);
+  });
+  document.getElementById('sceneSkip').addEventListener('click', endScene);
+  document.getElementById('floorGo').addEventListener('click', function () { try { localStorage.setItem('cornerOfficeMetNepo', '1'); } catch (e) {} window.location.href = 'career.html'; });
   btns.forEach(function (b) {
     b.addEventListener('click', function () {
       btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
-      if (b.dataset.name === 'Daily Management') { window.location.href = 'daily.html'; return; }
+      if (b.dataset.name === 'Career Mode') { if (met()) window.location.href = 'career.html'; else startScene(); return; }
       st.textContent = b.dataset.name + ' opens from here. That part of the game is not built yet.';
     });
   });

@@ -1,0 +1,198 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Choose Your Investor | Corner Office</title></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Public+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: character preview on the left like a game's select screen, choices on the right in labelled groups. A dark title card follows before the office. Single look, shared with the office HUD. */
+:root {
+  color-scheme: dark;
+  --ink: #1a1423; --hud: #1b1836; --hud2: #2a2650; --hud-edge: #f4ead2; --paper: #f4ead2; --mist: #b9b3d6; --gold: #ffbe5c; --gold-ink: #1a1230;
+  --pixel: "Pixelify Sans", "Trebuchet MS", Verdana, sans-serif; --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+}
+html, body { min-height: 100%; }
+body { background: #12102a; color: var(--paper); font-family: var(--body); font-size: 16px; }
+.wrap { box-sizing: border-box; max-width: 1080px; margin-inline: auto; padding-block: 28px; padding-inline: 16px; display: flex; flex-direction: column; gap: 20px; }
+h1 { margin: 0; font-family: var(--pixel); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.05; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--gold); }
+.lede { margin: 0; color: var(--mist); max-width: 60ch; }
+.cols { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.box { background: var(--hud); border: 3px solid var(--hud-edge); box-shadow: 0 0 0 3px var(--ink), 6px 6px 0 3px rgba(0, 0, 0, .45); }
+.stage { flex: 1 1 280px; max-width: 380px; padding: 16px; display: flex; flex-direction: column; gap: 12px; align-items: center; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+#preview { width: 100%; max-width: 300px; aspect-ratio: 40 / 56; image-rendering: pixelated; image-rendering: crisp-edges; background: #d8cba7; border: 3px solid var(--ink); }
+.picks { flex: 2 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 18px; padding: 18px; }
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+legend { padding: 0; font-family: var(--pixel); font-weight: 600; font-size: 18px; color: var(--gold); margin-bottom: 8px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; font: 600 17px var(--pixel); color: var(--paper); background: var(--hud2); border: 2px solid var(--ink); box-shadow: inset -2px -2px 0 #15122e, inset 2px 2px 0 #3d3870; cursor: pointer; }
+.opt:hover { border-color: var(--gold); }
+.opt[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); box-shadow: inset -2px -2px 0 #c98a2a, inset 2px 2px 0 #ffe0a3; }
+.opt:focus-visible, .go:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.opt .sw { width: 18px; height: 18px; border: 2px solid var(--ink); }
+#g_face { display: grid; grid-template-columns: repeat(4, max-content); }
+.opt.face { padding: 4px; flex-direction: column; gap: 2px; font-size: 13px; }
+.opt.face canvas { width: 64px; height: 60px; image-rendering: pixelated; image-rendering: crisp-edges; background: #d8cba7; display: block; }
+.go { min-height: 52px; padding: 10px 22px; font: 700 20px var(--pixel); color: var(--gold-ink); background: var(--gold); border: 3px solid var(--ink); box-shadow: inset -3px -3px 0 #c98a2a, inset 3px 3px 0 #ffe0a3; cursor: pointer; }
+.go:hover { background: #ffd58c; }
+.card { position: fixed; inset: 0; z-index: 10; background: #07060f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; text-align: center; }
+.card[hidden] { display: none; }
+.card p { margin: 0; max-width: 26ch; font-family: var(--pixel); font-size: clamp(22px, 4vw, 34px); line-height: 1.25; opacity: 0; transition: opacity 1.1s ease; }
+.card p.on { opacity: 1; }
+.card p.hl { color: var(--gold); }
+.card .go { opacity: 0; transition: opacity .8s ease; }
+.card .go.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .card p, .card .go { transition: none; } }
+@media (max-width: 700px) { .stage { position: static; max-width: none; } #preview { max-width: 200px; } }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Choose your <em>investor</em></h1>
+    <p class="lede">This is who walks into the building on day one. You can buy new clothes later with what you earn.</p>
+  </div>
+  <div class="cols">
+    <div class="stage box">
+      <canvas id="preview" width="80" height="112" role="img" aria-label="Preview of your investor"></canvas>
+      <button class="go" id="start" type="button">START MY CAREER</button>
+    </div>
+    <form class="picks box" id="picks">
+      <fieldset><legend>Character</legend><div class="opts" id="g_face"></div></fieldset>
+      <fieldset><legend>Hair style</legend><div class="opts" id="g_hair"></div></fieldset>
+      <fieldset><legend>Hair color</legend><div class="opts" id="g_hairColor"></div></fieldset>
+      <fieldset><legend>Dress shirt</legend><div class="opts" id="g_shirt"></div></fieldset>
+      <fieldset><legend>Pants</legend><div class="opts" id="g_pants"></div></fieldset>
+      <fieldset><legend>Shoes</legend><div class="opts" id="g_shoes"></div></fieldset>
+    </form>
+  </div>
+</div>
+
+<div class="card" id="card" hidden>
+  <p>You are about to begin your career as an investor.</p>
+  <p>You sit on Floor 1.</p>
+  <p>The only way up is to be the best in the industry.</p>
+  <p class="hl">And maybe, just maybe, you'll end up in the corner office.</p>
+  <button class="go" id="enter" type="button">ENTER THE BUILDING</button>
+</div>
+
+<script>
+(function () {
+  /* One character renderer shared by the character creator and the office. Units are room units (2 fine pixels). */
+  function makePerson(g, O) {
+    function R(x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x * 2), Math.round(y * 2), Math.max(1, Math.round(w * 2)), Math.max(1, Math.round(h * 2))); }
+    function quad(p, c) { g.fillStyle = c; g.beginPath(); g.moveTo(p[0] * 2, p[1] * 2); for (var i = 2; i < p.length; i += 2) g.lineTo(p[i] * 2, p[i + 1] * 2); g.fill(); }
+    function dot(x, y, r, c) { g.fillStyle = c; g.beginPath(); g.arc(x * 2, y * 2, r * 2, 0, 7); g.fill(); }
+    var SKIN = [['#f3cfae', '#d9a985'], ['#e0aa7a', '#bd875c'], ['#b87a4b', '#935c34'], ['#7a4a2c', '#5c3520']];
+    var HAIR = [['#1c1714', '#3d342d'], ['#4a3020', '#70503a'], ['#d9b45a', '#f2da93'], ['#9a3b1e', '#c75e33']];
+    var SHIRT = [['#f8f5ec', '#d2cfd8', '#e6e2d8'], ['#a3a9b6', '#7f8696', '#929aa8'], ['#30323e', '#1e2029', '#272934']];
+    var PANTS = [['#ece6d6', '#cfc7b2', '#f7f2e6'], ['#c9a06b', '#a47d4c', '#dcb681'], ['#3f5f9a', '#2f4a7c', '#5676b3']];
+    var SHOES = [['#7d4a28', '#a36a3d', '#2a180c'], ['#2b2b34', '#4a4a58', '#0e0e12']];
+    var SUIT = ['#2a2f55', '#1d2140', '#232848'];
+    return function (x, y, o, bob, blink) {
+      var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], f = o.gender === 'f';
+      var sh = SHIRT[o.suit ? 0 : o.shirt], pa = o.suit ? ['#2a2f55', '#1d2140', '#3a4070'] : PANTS[o.pants], so = SHOES[o.shoes], top = o.suit ? SUIT : sh;
+      // legs and shoes
+      R(x + 3, y + 26, 10, 17.5, O); R(x + 3.5, y + 26.5, 9, 4.5, pa[0]); R(x + 3.5, y + 31, 4.1, 12, pa[0]); R(x + 8.4, y + 31, 4.1, 12, pa[0]);
+      R(x + 6.6, y + 27, 1, 16, pa[1]); R(x + 11.5, y + 27, 1, 16, pa[1]); R(x + 5, y + 28, .5, 14.5, pa[2]); R(x + 9.9, y + 28, .5, 14.5, pa[2]);
+      R(x + 3.5, y + 42.4, 4.1, .6, pa[1]); R(x + 8.4, y + 42.4, 4.1, .6, pa[1]);
+      [2.6, 8.4].forEach(function (q) { R(x + q - .5, y + 42.9, 6, 3.1, O); R(x + q, y + 43.4, 5, 1.7, so[0]); R(x + q + .5, y + 43.4, 2.2, .5, so[1]); R(x + q, y + 45.1, 5, .5, so[2]); });
+      y += d;
+      if (o.hair === 2) { R(x + 1.6, y + 5, 12.8, 11, O); R(x + 2.1, y + 5, 11.8, 10.5, hc); }
+      // arms and hands
+      [[f ? 1.2 : .8, 1], [f ? 11.8 : 12.2, 0]].forEach(function (a) {
+        R(x + a[0] - .5, y + 14.3, 4, 14.6, O); R(x + a[0], y + 14.8, 3, 10.4, top[0]); R(x + a[0] + (a[1] ? 2.4 : 0), y + 15.5, .6, 9.5, top[1]);
+        R(x + a[0], y + 24.4, 3, .8, o.suit ? sh[0] : top[1]); R(x + a[0] + .3, y + 25.6, 2.4, 2.8, sk); R(x + a[0] + .3, y + 27.6, 2.4, .8, skD); R(x + a[0] + 1.4, y + 26.6, .4, 1.6, skD);
+      });
+      // torso
+      R(x + 3, y + 13.4, 10, 12.2, O); R(x + 3.5, y + 13.9, 9, 11.2, top[0]); R(x + 11, y + 14.5, 1.5, 10.6, top[2]); R(x + 3.5, y + 14.5, .8, 10.6, top[2]);
+      if (o.suit) {
+        quad([x + 5.8, y + 13.9, x + 10.2, y + 13.9, x + 8, y + 21], sh[0]); R(x + 7.6, y + 15, .8, 5.2, '#b3322c'); R(x + 7.4, y + 14.4, 1.2, 1, '#8f241f');
+        quad([x + 5.8, y + 13.9, x + 8, y + 21, x + 6.2, y + 19.6, x + 4.8, y + 15.2], '#3a4070'); quad([x + 10.2, y + 13.9, x + 8, y + 21, x + 9.8, y + 19.6, x + 11.2, y + 15.2], '#3a4070');
+        R(x + 7.9, y + 21, .3, 4.1, top[1]); R(x + 7.7, y + 22, .7, .6, '#c9a54a'); R(x + 7.7, y + 23.6, .7, .6, '#c9a54a'); R(x + 9.6, y + 17.6, 2, .5, '#f8f5ec');
+      } else {
+        R(x + 7.75, y + 15.5, .5, 9.6, sh[1]); for (var b = 0; b < 4; b++) R(x + 7.6, y + 16.6 + b * 2.3, .8, .6, o.shirt === 2 ? '#6b6f80' : '#9ea1b3');
+        R(x + 9.4, y + 17.4, 2.2, .4, sh[1]); R(x + 9.4, y + 17.4, .4, 2.4, sh[1]); R(x + 11.2, y + 17.4, .4, 2.4, sh[1]); R(x + 9.4, y + 19.6, 2.2, .4, sh[1]);
+        R(x + 4.5, y + 22.5, 2.5, .4, sh[1]); R(x + 9.5, y + 23.2, 2, .4, sh[1]);
+      }
+      // neck and collar
+      R(x + 6.2, y + 11.5, 3.6, 2.6, skD); R(x + 6.2, y + 11.5, 3.6, .8, 'rgba(40,15,5,.25)');
+      quad([x + 4.8, y + 13.2, x + 7, y + 12.8, x + 8, y + 16, x + 5.6, y + 15.6], O); quad([x + 5.3, y + 13.5, x + 6.8, y + 13.3, x + 7.6, y + 15.4, x + 5.9, y + 15.2], sh[0]);
+      quad([x + 11.2, y + 13.2, x + 9, y + 12.8, x + 8, y + 16, x + 10.4, y + 15.6], O); quad([x + 10.7, y + 13.5, x + 9.2, y + 13.3, x + 8.4, y + 15.4, x + 10.1, y + 15.2], sh[2]);
+      // belt, or jacket hem
+      if (o.suit) { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, top[1]); }
+      else { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, o.shoes ? '#1c1c22' : '#402a18'); R(x + 7.1, y + 24.9 - d, 1.8, 1.6, '#e8b84a'); R(x + 7.6, y + 25.4 - d, .8, .6, '#402a18'); }
+      // head
+      R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
+      g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
+      g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
+      g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
+      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)'); R(x + 2, y, 12, 4.2, hc);
+      if (o.hair === 0) { R(x + 2, y + 4.2, 1.6, 2.2, hc); R(x + 12.4, y + 4.2, 1.6, 2.2, hc); R(x + 9.5, y + 4.2, 3, .8, hc); }
+      else if (o.hair === 3) { R(x + 2, y + 4.2, 2, 3, hc); R(x + 12, y + 4.2, 2, 3, hc); }
+      else { R(x + 2, y + 4.2, 2.2, 9, hc); R(x + 11.8, y + 4.2, 2.2, 9, hc); R(x + 3.6, y + 4.2, 6.4, 1, hc); }
+      g.restore();
+      g.fillStyle = hc; g.beginPath(); g.ellipse((x + 8) * 2, (y + 3.2) * 2, 10.8, 6.4, 0, Math.PI, 0); g.fill();
+      if (o.hair === 3) { [[3, 3.2], [5, 1.2], [8, .4], [11, 1.2], [13, 3.2], [2.2, 5.6], [13.8, 5.6], [6.5, 2.4], [9.6, 2.4]].forEach(function (c) { dot(x + c[0], y + c[1], 2.3, hc); }); [[5, .8], [8.4, 0], [11.4, 1.2], [3, 3]].forEach(function (c) { dot(x + c[0], y + c[1], .6, hh); }); }
+      else R(x + 4.6, y + 1.2, 4, .5, hh);
+      if (o.hair === 1) { R(x + 1.3, y + 3.2, 2, 9, hc); R(x + 12.7, y + 3.2, 2, 9, hc); R(x + 1.3, y + 11.6, 2.4, .8, hh); R(x + 12.3, y + 11.6, 2.4, .8, hh); }
+      if (o.hair === 2) { R(x + 1.1, y + 3.2, 2.4, 14, hc); R(x + 12.5, y + 3.2, 2.4, 14, hc); R(x + 1.6, y + 6, .5, 10, hh); R(x + 13.9, y + 6, .5, 10, hh); }
+      var br = o.hairColor > 1 ? hc : '#2b1e16';
+      R(x + 4.8, y + 5.2, 2.4, .5, br); R(x + 8.8, y + 5.2, 2.4, .5, br);
+      if (blink) { R(x + 5, y + 6.8, 2, .4, '#2b1e16'); R(x + 9, y + 6.8, 2, .4, '#2b1e16'); }
+      else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.8, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 9.6, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 5, y + 6, 2, .3, '#2b1e16'); R(x + 9, y + 6, 2, .3, '#2b1e16'); if (f) { R(x + 4.5, y + 5.8, .6, .4, '#2b1e16'); R(x + 10.9, y + 5.8, .6, .4, '#2b1e16'); } }
+      R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
+      if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
+      R(x + 7, y + 10.9, 2, .3, skD);
+    };
+  }
+  function loadChar() {
+    var c = { gender: 'm', skin: 1, hair: 0, hairColor: 1, shirt: 0, pants: 1, shoes: 0 };
+    try { var o = JSON.parse(localStorage.getItem('cornerOfficeCharacter') || 'null'); if (o) for (var k in c) if (o[k] !== undefined) c[k] = o[k]; } catch (e) {}
+    return c;
+  }
+
+  var O = '#1d1730', C = loadChar();
+  var pv = document.getElementById('preview'), pg = pv.getContext('2d'), draw = makePerson(pg, O);
+  var GROUPS = {
+    hair: [['Short', 0], ['Medium', 1], ['Long', 2], ['Curly', 3]],
+    hairColor: [['Black', 0, '#1c1714'], ['Brown', 1, '#4a3020'], ['Blonde', 2, '#d9b45a'], ['Red', 3, '#9a3b1e']],
+    shirt: [['White', 0, '#f8f5ec'], ['Grey', 1, '#a3a9b6'], ['Black', 2, '#30323e']],
+    pants: [['White', 0, '#ece6d6'], ['Brown', 1, '#c9a06b'], ['Blue', 2, '#3f5f9a']],
+    shoes: [['Brown', 0, '#7d4a28'], ['Black', 1, '#2b2b34']]
+  };
+  var faces = [];
+  ['m', 'f'].forEach(function (gd) { for (var s = 0; s < 4; s++) faces.push({ gender: gd, skin: s }); });
+
+  function paint() {
+    pg.clearRect(0, 0, 80, 112); pg.fillStyle = '#dccfab'; pg.fillRect(0, 0, 80, 84); pg.fillStyle = '#cdbd93'; pg.fillRect(0, 60, 80, 24); pg.fillStyle = '#8a7958'; pg.fillRect(0, 80, 80, 6);
+    pg.fillStyle = '#50608c'; pg.fillRect(0, 86, 80, 26); pg.fillStyle = 'rgba(14,10,36,.32)'; pg.beginPath(); pg.ellipse(40, 104, 20, 4, 0, 0, 7); pg.fill();
+    draw(12, 5.5, C, false, false);
+    document.querySelectorAll('.opt').forEach(function (b) {
+      var k = b.dataset.k, on = k === 'face' ? (faces[+b.dataset.v].gender === C.gender && faces[+b.dataset.v].skin === C.skin) : C[k] === +b.dataset.v;
+      b.setAttribute('aria-pressed', String(on));
+    });
+    faces.forEach(function (f, i) {
+      var c = document.getElementById('face' + i), g2 = c.getContext('2d'); g2.clearRect(0, 0, 32, 30); g2.fillStyle = '#dccfab'; g2.fillRect(0, 0, 32, 30);
+      makePerson(g2, O)(0, 1.5, { gender: f.gender, skin: f.skin, hair: C.hair, hairColor: C.hairColor, shirt: C.shirt, pants: C.pants, shoes: C.shoes }, false, false);
+    });
+  }
+  var fh = '';
+  faces.forEach(function (f, i) { fh += '<button type="button" class="opt face" data-k="face" data-v="' + i + '" aria-pressed="false" aria-label="' + (f.gender === 'm' ? 'Man' : 'Woman') + ', skin tone ' + (f.skin + 1) + '"><canvas id="face' + i + '" width="32" height="30"></canvas></button>'; });
+  document.getElementById('g_face').innerHTML = fh;
+  Object.keys(GROUPS).forEach(function (k) {
+    document.getElementById('g_' + k).innerHTML = GROUPS[k].map(function (o) { return '<button type="button" class="opt" data-k="' + k + '" data-v="' + o[1] + '" aria-pressed="false">' + (o[2] ? '<span class="sw" style="background:' + o[2] + '"></span>' : '') + o[0] + '</button>'; }).join('');
+  });
+  function save() { try { localStorage.setItem('cornerOfficeCharacter', JSON.stringify(C)); } catch (e) {} }
+  document.getElementById('picks').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.opt'); if (!b) return;
+    if (b.dataset.k === 'face') { C.gender = faces[+b.dataset.v].gender; C.skin = faces[+b.dataset.v].skin; } else C[b.dataset.k] = +b.dataset.v;
+    save(); paint();
+  });
+  paint();
+
+  var card = document.getElementById('card'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('start').addEventListener('click', function () {
+    save(); card.hidden = false; window.scrollTo(0, 0);
+    var els = card.querySelectorAll('p, .go');
+    els.forEach(function (el, i) { setTimeout(function () { el.classList.add('on'); if (i === els.length - 1) el.focus(); }, reduce ? 0 : 400 + i * 1900); });
+  });
+  document.getElementById('enter').addEventListener('click', function () { window.location.href = 'office.html'; });
+})();
+</script>
+</body></html>
