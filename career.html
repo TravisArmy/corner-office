@@ -434,10 +434,11 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
   /* ---------- walkthrough ---------- */
   var TOUR = [
     { el: 'paneTree', t: 'The market weights', b: 'These are the weights of the market you chose. Each row shows the market weight and yours. Open a sector to reach its industries and companies, then change any weight you like.' },
+    { el: 'rebal', t: 'Rebalance to 100%', b: 'Your weights must always add up to exactly 100%. Whenever you raise or lower something, press REBALANCE TO 100%. It scales every name you have not touched so the total is 100% again, and leaves your own changes alone. You will use this button all the time.' },
     { el: 'paneAdd', t: 'Names outside your market', b: 'Here you can add individual companies from outside this market that you think will help you outperform.' },
     { el: 'paneRisk', t: 'Your risk metrics', b: 'Track these as you build your portfolio. Active share and tracking error show how far you have moved away from the market, and where the risk sits.' },
-    { el: 'paneStatus', t: 'Your daily routine', b: 'Set your portfolio every trading day before 9:30 am Eastern. At 9:30 your weights lock. After the close at 4:00 pm the data updates, and you can view your daily performance and adjust your weights for the next day.' },
-    { el: null, t: 'Good luck!', b: 'That is everything you need. Beat your market and the corner office is yours.' }
+    { el: 'paneStatus', t: 'Your daily routine', b: 'Set your portfolio every trading day before 9:30 am Eastern. After the close at 4:00 pm the data updates, and you can view your daily performance and adjust your weights for the next day.' },
+    { el: 'confirm', t: 'Lock in your weights', b: 'Lock in your weights here. You can change them as often as you like, but at 9:30 am Eastern they close for the day. If you have not locked in new weights by then, the weights from the previous day are used. Good luck!' }
   ];
   function showTour() {
     var box = $('tour'), old = document.querySelector('.tourhl'); if (old) old.classList.remove('tourhl');

@@ -39,12 +39,12 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 .stats { display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 12px 14px; align-items: center; }
 .stat { display: flex; flex-direction: column; gap: 2px; }
 .stat span { font-family: var(--pixel); font-size: 13px; letter-spacing: .06em; color: var(--mist); text-transform: uppercase; }
-.stat b { font-family: var(--pixel); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat b { font-family: var(--body); font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat b.cash { color: var(--gold); }
 .sample { font-family: var(--pixel); font-weight: 600; font-size: 13px; text-transform: uppercase; color: var(--gold-ink); background: var(--gold); padding: 6px 8px; }
 .talk { margin-top: auto; align-self: center; width: min(100%, 720px); box-sizing: border-box; padding: 14px 16px; }
 .talk b { display: block; font-family: var(--pixel); font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
-#status { margin: 0; font-family: var(--pixel); font-size: 19px; line-height: 1.4; min-height: 2.8em; }
+#status { margin: 0; font-family: var(--body); font-size: 18px; line-height: 1.45; min-height: 2.9em; }
 .hud.scene .top { visibility: hidden; }
 .tbtn { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
 .tbtn[hidden], .card[hidden] { display: none; }
@@ -53,8 +53,8 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 .sbtn.big { font-size: 20px; padding: 12px 24px; }
 .sbtn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .card { position: fixed; inset: 0; z-index: 10; background: #07060f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; text-align: center; }
-.card p { margin: 0; max-width: 28ch; font-family: var(--pixel); font-size: clamp(20px, 3.4vw, 30px); line-height: 1.3; }
-.card p.floor { font-weight: 700; font-size: clamp(44px, 9vw, 88px); color: var(--gold); line-height: 1; }
+.card p { margin: 0; max-width: 30ch; font-family: var(--body); font-weight: 600; font-size: clamp(20px, 3.4vw, 30px); line-height: 1.3; }
+.card p.floor { font-family: var(--pixel); font-weight: 700; font-size: clamp(44px, 9vw, 88px); color: var(--gold); line-height: 1; }
 @media (max-width: 767px) {
   .hud { padding-block: 10px; padding-inline: 10px; gap: 10px; }
   .menu { width: 100%; padding: 10px; }
@@ -178,6 +178,18 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   function makePerson(g, O) {
     function R(x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x * 2), Math.round(y * 2), Math.max(1, Math.round(w * 2)), Math.max(1, Math.round(h * 2))); }
     function quad(p, c) { g.fillStyle = c; g.beginPath(); g.moveTo(p[0] * 2, p[1] * 2); for (var i = 2; i < p.length; i += 2) g.lineTo(p[i] * 2, p[i + 1] * 2); g.fill(); }
+    function blob(x, y, pts, fill, edge) {
+      var n = pts.length, i, a, b; g.beginPath();
+      for (i = 0; i <= n; i++) { a = pts[i % n]; b = pts[(i + 1) % n]; var mx = (x + (a[0] + b[0]) / 2) * 2, my = (y + (a[1] + b[1]) / 2) * 2; if (!i) g.moveTo(mx, my); else g.quadraticCurveTo((x + a[0]) * 2, (y + a[1]) * 2, mx, my); }
+      g.closePath(); g.fillStyle = fill; g.fill(); if (edge) { g.strokeStyle = edge; g.lineWidth = 1; g.stroke(); }
+    }
+    function strand(x, y, a, c, b, col) { g.strokeStyle = col; g.lineWidth = 1; g.lineCap = 'round'; g.beginPath(); g.moveTo((x + a[0]) * 2, (y + a[1]) * 2); g.quadraticCurveTo((x + c[0]) * 2, (y + c[1]) * 2, (x + b[0]) * 2, (y + b[1]) * 2); g.stroke(); }
+    var CUT = [
+      [[2.6, 6.6], [2.4, 3.4], [4.2, .8], [8, -.1], [11.8, .8], [13.6, 3.4], [13.4, 6.6], [12.6, 6.4], [12.5, 4.6], [10.8, 3.3], [7.2, 3.9], [4.8, 4.5], [3.6, 5.2], [3.4, 6.6]],
+      [[1.9, 12], [1.5, 7], [2.1, 3], [4.2, .5], [8, -.5], [11.8, .5], [13.9, 3], [14.5, 7], [14.1, 12], [12.9, 12.5], [12.5, 11], [12.8, 7.5], [12.4, 5], [10.8, 3.5], [7.2, 3.8], [4.8, 4.6], [3.6, 5.6], [3.2, 7.5], [3.5, 11], [3.1, 12.5]],
+      [[1.7, 17.4], [1.2, 10], [2, 3], [4.2, .5], [8, -.5], [11.8, .5], [14, 3], [14.8, 10], [14.3, 17.4], [12.9, 17.9], [12.6, 15], [12.9, 8], [12.4, 5], [10.6, 3.4], [7, 3.7], [4.8, 4.4], [3.6, 5.6], [3.1, 8], [3.4, 15], [3.1, 17.9]],
+      [[2.9, 5.6], [2.9, 3.2], [4.6, 1.1], [8, .4], [11.4, 1.1], [13.1, 3.2], [13.1, 5.6], [12.5, 5.3], [11.7, 3.5], [8, 2.7], [4.3, 3.5], [3.5, 5.3]]
+    ];
     function dot(x, y, r, c) { g.fillStyle = c; g.beginPath(); g.arc(x * 2, y * 2, r * 2, 0, 7); g.fill(); }
     var SKIN = [['#f3cfae', '#d9a985'], ['#e0aa7a', '#bd875c'], ['#b87a4b', '#935c34'], ['#7a4a2c', '#5c3520']];
     var HAIR = [['#1c1714', '#3d342d'], ['#4a3020', '#70503a'], ['#d9b45a', '#f2da93'], ['#9a3b1e', '#c75e33']];
@@ -194,7 +206,7 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       R(x + 3.5, y + 42.4, 4.1, .6, pa[1]); R(x + 8.4, y + 42.4, 4.1, .6, pa[1]);
       [2.6, 8.4].forEach(function (q) { R(x + q - .5, y + 42.9, 6, 3.1, O); R(x + q, y + 43.4, 5, 1.7, so[0]); R(x + q + .5, y + 43.4, 2.2, .5, so[1]); R(x + q, y + 45.1, 5, .5, so[2]); });
       y += d;
-      if (o.hair === 2) { R(x + 1.6, y + 5, 12.8, 11, O); R(x + 2.1, y + 5, 11.8, 10.5, hc); }
+      if (o.hair === 2) blob(x, y, [[1.8, 6], [1.3, 12], [1.8, 17.6], [4.5, 18.4], [8, 18], [11.5, 18.4], [14.2, 17.6], [14.7, 12], [14.2, 6], [8, 3.5]], hc, O);
       // arms and hands
       [[f ? 1.2 : .8, 1], [f ? 11.8 : 12.2, 0]].forEach(function (a) {
         R(x + a[0] - .5, y + 14.3, 4, 14.6, O); R(x + a[0], y + 14.8, 3, 10.4, top[0]); R(x + a[0] + (a[1] ? 2.4 : 0), y + 15.5, .6, 9.5, top[1]);
@@ -217,22 +229,21 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       quad([x + 11.2, y + 13.2, x + 9, y + 12.8, x + 8, y + 16, x + 10.4, y + 15.6], O); quad([x + 10.7, y + 13.5, x + 9.2, y + 13.3, x + 8.4, y + 15.4, x + 10.1, y + 15.2], sh[2]);
       // belt, or jacket hem
       if (o.suit) { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, top[1]); }
-      else { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, o.shoes ? '#1c1c22' : '#402a18'); R(x + 7.1, y + 24.9 - d, 1.8, 1.6, '#e8b84a'); R(x + 7.6, y + 25.4 - d, .8, .6, '#402a18'); }
+      else { var bc = o.belt ? '#1c1c22' : '#5a3a20'; R(x + 3, y + 25 - d, 10, 1.5, O); R(x + 3.5, y + 25.3 - d, 9, .8, bc); R(x + 7.3, y + 25.2 - d, 1.4, 1, '#e8b84a'); R(x + 7.7, y + 25.5 - d, .6, .4, bc); }
       // head
       R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
       g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
       g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
       g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
-      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)'); R(x + 2, y, 12, 4.2, hc);
-      if (o.hair === 0) { R(x + 2, y + 4.2, 1.6, 2.2, hc); R(x + 12.4, y + 4.2, 1.6, 2.2, hc); R(x + 9.5, y + 4.2, 3, .8, hc); }
-      else if (o.hair === 3) { R(x + 2, y + 4.2, 2, 3, hc); R(x + 12, y + 4.2, 2, 3, hc); }
-      else { R(x + 2, y + 4.2, 2.2, 9, hc); R(x + 11.8, y + 4.2, 2.2, 9, hc); R(x + 3.6, y + 4.2, 6.4, 1, hc); }
+      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)');
       g.restore();
-      g.fillStyle = hc; g.beginPath(); g.ellipse((x + 8) * 2, (y + 3.2) * 2, 10.8, 6.4, 0, Math.PI, 0); g.fill();
-      if (o.hair === 3) { [[3, 3.2], [5, 1.2], [8, .4], [11, 1.2], [13, 3.2], [2.2, 5.6], [13.8, 5.6], [6.5, 2.4], [9.6, 2.4]].forEach(function (c) { dot(x + c[0], y + c[1], 2.3, hc); }); [[5, .8], [8.4, 0], [11.4, 1.2], [3, 3]].forEach(function (c) { dot(x + c[0], y + c[1], .6, hh); }); }
-      else R(x + 4.6, y + 1.2, 4, .5, hh);
-      if (o.hair === 1) { R(x + 1.3, y + 3.2, 2, 9, hc); R(x + 12.7, y + 3.2, 2, 9, hc); R(x + 1.3, y + 11.6, 2.4, .8, hh); R(x + 12.3, y + 11.6, 2.4, .8, hh); }
-      if (o.hair === 2) { R(x + 1.1, y + 3.2, 2.4, 14, hc); R(x + 12.5, y + 3.2, 2.4, 14, hc); R(x + 1.6, y + 6, .5, 10, hh); R(x + 13.9, y + 6, .5, 10, hh); }
+      blob(x, y, CUT[o.hair], hc, O);
+      if (o.hair === 3) { g.globalAlpha = .35; blob(x, y, [[4.2, 3.4], [8, 2.5], [11.8, 3.4], [8, 1.6]], hh, null); g.globalAlpha = 1; }
+      else {
+        strand(x, y, [4.6, 2], [7, .6], [10.4, 1.4], hh); strand(x, y, [5.4, 3.2], [7.6, 2.2], [10.4, 2.6], hh);
+        if (o.hair === 1) { strand(x, y, [2.5, 5], [2, 8], [2.6, 11.4], hh); strand(x, y, [13.5, 5], [14, 8], [13.4, 11.4], hh); }
+        if (o.hair === 2) { strand(x, y, [2.4, 5], [1.8, 11], [2.4, 16.8], hh); strand(x, y, [13.6, 5], [14.2, 11], [13.6, 16.8], hh); }
+      }
       var br = o.hairColor > 1 ? hc : '#2b1e16';
       R(x + 4.8, y + 5.2, 2.4, .5, br); R(x + 8.8, y + 5.2, 2.4, .5, br);
       if (blink) { R(x + 5, y + 6.8, 2, .4, '#2b1e16'); R(x + 9, y + 6.8, 2, .4, '#2b1e16'); }
@@ -243,13 +254,13 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     };
   }
   function loadChar() {
-    var c = { gender: 'm', skin: 1, hair: 0, hairColor: 1, shirt: 0, pants: 1, shoes: 0 };
+    var c = { gender: 'm', skin: 1, hair: 0, hairColor: 1, shirt: 0, pants: 1, shoes: 0, belt: 0 };
     try { var o = JSON.parse(localStorage.getItem('cornerOfficeCharacter') || 'null'); if (o) for (var k in c) if (o[k] !== undefined) c[k] = o[k]; } catch (e) {}
     return c;
   }
 
   var person = makePerson(g, O), CHAR = loadChar();
-  var NEPO = { gender: 'm', skin: 0, hair: 2, hairColor: 2, shirt: 0, pants: 0, shoes: 1, suit: true }, scene = { on: false, nx: -20, arrived: false, i: -1 };
+  var NEPO = { gender: 'm', skin: 0, hair: 2, hairColor: 2, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: true }, scene = { on: false, nx: -20, arrived: false, i: -1 };
 
   function draw(ms) {
     var t = ms / 1000, i, j;
@@ -369,14 +380,15 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 
   var st = document.getElementById('status'), btns = document.querySelectorAll('.items button'), who = document.getElementById('who'), me = who.textContent;
   var LINES = [
-    ['Nepo Baby', 'Welcome to the jungle.'],
-    ['Nepo Baby', "You sit here on the first floor. If you look out your window, you can see your lovely view of the world's shittiest hot dog stand."],
-    ['Nepo Baby', 'This is the show, and I am going to dominate you.'],
-    [me, 'Who are you?'],
-    ['Nepo Baby', "I'm Nepo Baby. You'll probably never see me, because I sit all the way up on Floor 5. And I'm on the fast track to Floor 10."],
-    ['Nepo Baby', "I just wanted to come and welcome you to the game. You probably won't last. You'll be working at the hot dog stand soon."],
-    [me, "I am the game, pal. And I can't wait to dominate you."],
-    ['Nepo Baby', 'OK, chief. Have fun down here with the rats.']
+    ['Nepo Baby', 'Well, well. Fresh meat on Floor 1. Welcome to the jungle.'],
+    ['Nepo Baby', "Love the office. Two whole windows, and a front-row seat to the world's shittiest hot dog stand. Inspiring stuff."],
+    [me, 'Sorry, who are you?'],
+    ['Nepo Baby', "Nepo Baby. Floor 5. Don't bother writing it down. You'll never be up there to visit."],
+    ['Nepo Baby', "I'm on the fast track to Floor 10. It's amazing how far hard work gets you when your dad owns the building."],
+    ['Nepo Baby', "This is the show, rookie. And I'm going to dominate it. You included."],
+    ['Nepo Baby', 'Anyway, I just came down to say welcome. And goodbye. Most new hires are selling hot dogs by Friday.'],
+    [me, 'Keep my seat warm on Floor 10. I am the game, pal.'],
+    ['Nepo Baby', 'Sure you are, chief. Have fun down here with the rats.']
   ];
   function met() { try { return localStorage.getItem('cornerOfficeMetNepo') === '1'; } catch (e) { return false; } }
   function showLine() { var l = LINES[scene.i]; who.textContent = l[0]; st.textContent = l[1]; document.getElementById('sceneNext').focus({ preventScroll: true }); }
