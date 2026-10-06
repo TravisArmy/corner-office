@@ -476,7 +476,7 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
     else if (b.id === 'confirm') { ui.tour = -1; S.W = JSON.parse(JSON.stringify(S.draft)); ui.msg = ''; ui.screen = 'perf'; save(); render(); window.scrollTo(0, 0); }
     else if (b.id === 'sim1') { recordClose(); save(); render('sim1'); }
     else if (b.id === 'sim20') { var dd = new Date(), back = 0; while (dd.getDay() === 0 || dd.getDay() === 6) dd.setDate(dd.getDate() - 1); while (back < 19) { dd.setDate(dd.getDate() - 1); if (dd.getDay() !== 0 && dd.getDay() !== 6) back++; } S.start = iso(dd); S.days = []; S.cum = {}; S.sec = SECT.map(function () { return [0, 0]; }); for (var i = 0; i < 20; i++) recordClose(); save(); render('sim20'); }
-    else if (b.id === 'wipe') { S = { v: 1, start: iso(new Date()), W: null, draft: benchW(), touched: [], custom: [], days: [], sec: SECT.map(function () { return [0, 0]; }), cum: {}, market: null }; ui.screen = 'career'; ui.tour = -1; ui.msg = ''; save(); render(); window.scrollTo(0, 0); }
+    else if (b.id === 'wipe') { try { localStorage.removeItem('cornerOfficeMetNepo'); } catch (e) {} S = { v: 1, start: iso(new Date()), W: null, draft: benchW(), touched: [], custom: [], days: [], sec: SECT.map(function () { return [0, 0]; }), cum: {}, market: null }; ui.screen = 'career'; ui.tour = -1; ui.msg = ''; save(); render(); window.scrollTo(0, 0); }
   });
   scr.addEventListener('change', function (ev) {
     var el = ev.target;
