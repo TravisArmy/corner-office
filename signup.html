@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Create Investor | Corner Office</title></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Create Investor | Corner Office</title><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="cloud.js"></script></head><body>
 
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -341,9 +341,20 @@ button.bar { width: 100%; font-family: var(--display); font-size: clamp(20px, 5.
     var b = mark(em, 'email-err', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim()) ? '' : 'Enter a full email address, like you@example.com.');
     var c = mark(pw, 'pw-err', pw.value.length >= 8 ? '' : 'Use at least 8 characters.');
     if (!a) nm.focus(); else if (!b) em.focus(); else if (!c) pw.focus();
-    if (a && b && c) { window.location.href = 'character.html'; return; }
+    if (a && b && c) { window.cornerSignup(nm.value.trim(), em.value.trim(), pw.value, st); return; }
     st.textContent = '';
   });
 })();
+</script>
+<script>
+window.cornerSignup = function (name, email, pw, st) {
+  if (!window.Cloud || !Cloud.ready) { try { localStorage.setItem('cornerOfficeUser', name); } catch (e) {} window.location.href = 'character.html'; return; }
+  st.textContent = 'Creating your account...';
+  Cloud.signUp(name, email, pw).then(function (r) {
+    if (r.error) st.textContent = r.error;
+    else if (r.confirm) st.textContent = 'Account created. Open the confirmation link we emailed you, then log in.';
+    else window.location.href = 'character.html';
+  });
+};
 </script>
 </body></html>

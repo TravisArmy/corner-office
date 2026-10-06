@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Career Mode | Corner Office</title></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Career Mode | Corner Office</title><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="cloud.js"></script></head><body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Pixelify+Sans:wght@700&display=swap">
 <style>
 /* Layout: one desktop computer fills the window. Inside its screen: weights tree on the left, live risk metrics on the right; after confirming, a performance report. Calm dark screen, built for long sessions. Single look. */
@@ -231,13 +231,31 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
   /* ---------- simulated market (until a real data feed is connected) ---------- */
   function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function gauss(key) { var a = hash(key), b = hash(key + '#'); var u1 = (a + 1) / 4294967297, u2 = b / 4294967296; return Math.sqrt(-2 * Math.log(u1)) * Math.cos(6.283185307 * u2); }
+  /* Live mode (accounts connected): one close per trading day after 4:00 pm Eastern, and new weights wait for the 9:30 am lock. */
+  var LIVE = !!(window.Cloud && window.Cloud.ready);
+  function et() { var p = {}; new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; }); return { d: p.year + '-' + p.month + '-' + p.day, mins: (+p.hour % 24) * 60 + (+p.minute) }; }
+  function dt(sd) { var q = sd.split('-'); return new Date(+q[0], +q[1] - 1, +q[2]); }
+  function isTD(sd) { var g = dt(sd).getDay(); return g !== 0 && g !== 6; }
+  function shift(sd, n) { var d = dt(sd); do { d.setDate(d.getDate() + n); } while (d.getDay() === 0 || d.getDay() === 6); return iso(d); }
+  function effDate() { var e = et(); return isTD(e.d) && e.mins < 570 ? e.d : shift(e.d, 1); }
+  function lastClose() { var e = et(); return isTD(e.d) && e.mins >= 960 ? e.d : shift(e.d, -1); }
+  function autoClose() { if (!LIVE || !S.W) return; var tgt = lastClose(), n = 0; while (nextDay() <= tgt && n++ < 400) recordClose(); }
+  function confirmWeights() {
+    var nw = JSON.parse(JSON.stringify(S.draft));
+    if (!LIVE) { S.W = nw; return; }
+    var eff = effDate();
+    if (!S.W) { S.W = nw; S.firstClose = eff; S.start = et().d; }
+    else if (eff <= nextDay()) { S.W = nw; S.pending = null; }
+    else S.pending = { W: nw, from: eff };
+  }
   function nextDay() {
-    var d; if (S.days.length) { var p = S.days[S.days.length - 1].d.split('-'); d = new Date(+p[0], +p[1] - 1, +p[2] + 1); } else { var q = S.start.split('-'); d = new Date(+q[0], +q[1] - 1, +q[2]); }
+    var d; if (S.days.length) { var p = S.days[S.days.length - 1].d.split('-'); d = new Date(+p[0], +p[1] - 1, +p[2] + 1); } else { var q = (S.firstClose || S.start).split('-'); d = new Date(+q[0], +q[1] - 1, +q[2]); }
     while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1); return iso(d);
   }
   function recordClose() {
     if (!S.W) return;
-    var d = nextDay(), all = names(), m = 0.0004 + gauss('M' + d) * 0.0095, f = SECT.map(function (_, k) { return gauss('S' + k + d) * 0.0055; });
+    var d = nextDay(); if (S.pending && d >= S.pending.from) { S.W = S.pending.W; S.pending = null; }
+    var all = names(), m = 0.0004 + gauss('M' + d) * 0.0095, f = SECT.map(function (_, k) { return gauss('S' + k + d) * 0.0055; });
     var p = 0, b = 0, sp = SECT.map(function () { return 0; }), sb = SECT.map(function () { return 0; }), wp = SECT.map(function () { return 0; }), wb = SECT.map(function () { return 0; }), rs = [];
     all.forEach(function (x) { var wt = S.W[x.t] || 0; if (wt < 1e-12 && x.b < 1e-12) return; var r = m + f[x.s] + gauss(x.t + d) * 0.0165; p += wt * r; b += x.b * r; sp[x.s] += wt * r; sb[x.s] += x.b * r; wp[x.s] += wt; wb[x.s] += x.b; rs.push([x.t, wt - x.b, r]); });
     SECT.forEach(function (_, k) { var rb = wb[k] > 0 ? sb[k] / wb[k] : b, rp = wp[k] > 0 ? sp[k] / wp[k] : rb; S.sec[k][0] += (wp[k] - wb[k]) * (rb - b); S.sec[k][1] += wp[k] * (rp - rb); });
@@ -352,7 +370,7 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
     var diff = cp - cb, n = F.days.length, won = F.state === 'won';
     h += '<div class="pane challenge' + (won ? ' won' : '') + '"><div class="ph"><h2>FLOOR 1 CHALLENGE</h2><span class="pips" aria-hidden="true">' + [0, 1, 2].map(function (i) { return '<i class="' + (i < n ? 'on' : '') + '"></i>'; }).join('') + '</span></div>';
     h += '<p class="goal">Trade for three business days and beat the market to climb the ladder past Nepo Baby.</p>';
-    if (won) h += '<p class="pos"><b>Challenge complete.</b> You beat the market by ' + spct(diff) + ' over three business days. Floor 2 opens in a future update.</p>';
+    if (won) h += '<p class="pos"><b>Challenge complete.</b> You beat the market by ' + spct(diff) + ' over three business days. Head back to your office: someone is waiting for you.</p>';
     else if (!n) h += '<p>' + (F.fails ? 'Attempt ' + F.attempt + '. Your last three days did not beat the market, so a new three-day run starts at the next close.' : 'Your three days start at the next market close.') + '</p>';
     else h += '<p>Day ' + n + ' of 3' + (F.fails ? ' (attempt ' + F.attempt + ')' : '') + '. You are <b class="' + cls(diff) + '">' + (diff >= 0 ? 'ahead by ' : 'behind by ') + pct(Math.abs(diff)) + '</b>. ' + (3 - n) + ' more close' + (3 - n > 1 ? 's' : '') + ' to go.</p>';
     h += '</div>';
@@ -394,7 +412,8 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
       h += '</div></div></div>';
     }
     }
-    h += '<div class="demo"><p class="warn">DEMO MODE. Prices are simulated until a live market feed is connected. Use these to see how the report fills in. Simulating the previous 20 closes replaces your history with the 20 trading days up to today.</p><button class="btn" type="button" id="sim1">SIMULATE NEXT CLOSE</button><button class="btn" type="button" id="sim20">SIMULATE PREVIOUS 20 CLOSES</button><button class="btn" type="button" id="wipe">RESET ACCOUNT</button></div>';
+    if (LIVE) h += '<div class="demo"><p>' + (S.pending ? 'Your new weights take effect at the close on ' + esc(S.pending.from) + '. Until then your previous weights are in force. ' : '') + 'Next close to be recorded: ' + esc(nextDay()) + ', after 4:00 pm Eastern. Prices are simulated during testing, and every player gets the same market.</p></div>';
+    else h += '<div class="demo"><p class="warn">DEMO MODE. Prices are simulated until a live market feed is connected. Use these to see how the report fills in. Simulating the previous 20 closes replaces your history with the 20 trading days up to today.</p><button class="btn" type="button" id="sim1">SIMULATE NEXT CLOSE</button><button class="btn" type="button" id="sim20">SIMULATE PREVIOUS 20 CLOSES</button><button class="btn" type="button" id="wipe">RESET ACCOUNT</button></div>';
     $('screen').innerHTML = h;
     $('keys').innerHTML = '<a class="btn" href="office.html">&lt; BACK TO OFFICE</a><button class="btn go" type="button" id="toWeights">ADJUST WEIGHTS</button>';
     var hit = $('hit'); if (hit) {
@@ -473,10 +492,10 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
     if (b.dataset.open) { ui.open[b.dataset.open] = !ui.open[b.dataset.open]; render(); var nb = scr.querySelector('[data-open="' + b.dataset.open + '"]'); if (nb) nb.focus(); return; }
     if (b.id === 'rebal') { ui.msg = rebalance(); save(); render('rebal'); }
     else if (b.id === 'reset') { S.draft = benchW(); S.touched = []; S.custom = []; ui.addMsg = ''; ui.msg = 'Weights reset to match the S&P 500.'; save(); render('reset'); }
-    else if (b.id === 'confirm') { ui.tour = -1; S.W = JSON.parse(JSON.stringify(S.draft)); ui.msg = ''; ui.screen = 'perf'; save(); render(); window.scrollTo(0, 0); }
+    else if (b.id === 'confirm') { ui.tour = -1; confirmWeights(); ui.msg = ''; ui.screen = 'perf'; save(); render(); window.scrollTo(0, 0); }
     else if (b.id === 'sim1') { recordClose(); save(); render('sim1'); }
     else if (b.id === 'sim20') { var dd = new Date(), back = 0; while (dd.getDay() === 0 || dd.getDay() === 6) dd.setDate(dd.getDate() - 1); while (back < 19) { dd.setDate(dd.getDate() - 1); if (dd.getDay() !== 0 && dd.getDay() !== 6) back++; } S.start = iso(dd); S.days = []; S.cum = {}; S.sec = SECT.map(function () { return [0, 0]; }); for (var i = 0; i < 20; i++) recordClose(); save(); render('sim20'); }
-    else if (b.id === 'wipe') { try { localStorage.removeItem('cornerOfficeMetNepo'); } catch (e) {} S = { v: 1, start: iso(new Date()), W: null, draft: benchW(), touched: [], custom: [], days: [], sec: SECT.map(function () { return [0, 0]; }), cum: {}, market: null }; ui.screen = 'career'; ui.tour = -1; ui.msg = ''; save(); render(); window.scrollTo(0, 0); }
+    else if (b.id === 'wipe') { try { ['cornerOfficeMetNepo', 'cornerOfficeSeenBlocks', 'cornerOfficeLastScene'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {} S = { v: 1, start: iso(new Date()), W: null, draft: benchW(), touched: [], custom: [], days: [], sec: SECT.map(function () { return [0, 0]; }), cum: {}, market: null }; ui.screen = 'career'; ui.tour = -1; ui.msg = ''; save(); render(); window.scrollTo(0, 0); }
   });
   scr.addEventListener('change', function (ev) {
     var el = ev.target;
@@ -514,7 +533,7 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
   });
   $('keys').addEventListener('click', function (ev) {
     var b = ev.target.closest('button'); if (!b) return;
-    if (b.id === 'toWeights') { S.draft = JSON.parse(JSON.stringify(S.W)); ui.screen = 'weights'; ui.msg = ''; render(); window.scrollTo(0, 0); }
+    if (b.id === 'toWeights') { S.draft = JSON.parse(JSON.stringify(S.pending ? S.pending.W : S.W)); ui.screen = 'weights'; ui.msg = ''; render(); window.scrollTo(0, 0); }
     else if (b.id === 'toPerf') { ui.tour = -1; ui.screen = 'perf'; render(); window.scrollTo(0, 0); }
     else if (b.id === 'howto') { ui.tour = 0; showTour(); }
   });
@@ -522,6 +541,7 @@ var DIR = [["ASML","ASML Holding",59],["TSM","Taiwan Semiconductor Manufacturing
   function applyMode() { $('monitor').classList.toggle('light', light); $('mode').textContent = light ? 'DARK MODE' : 'LIGHT MODE'; }
   $('mode').addEventListener('click', function () { light = !light; applyMode(); try { localStorage.setItem('cornerOfficeScreen', light ? 'light' : 'dark'); } catch (e) {} });
   applyMode();
+  autoClose(); if (LIVE) save();
   render();
 })();
 </script>

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Investor Login | Corner Office</title></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Investor Login | Corner Office</title><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="cloud.js"></script></head><body>
 
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -379,9 +379,24 @@ button.bar { width: 100%; font-family: var(--display); font-size: clamp(20px, 5.
     var a = mark(em, 'email-err', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim()) ? '' : 'Enter the email you signed up with.');
     var b = mark(pw, 'pw-err', pw.value.length ? '' : 'Enter your password.');
     if (!a) em.focus(); else if (!b) pw.focus();
-    if (a && b) { window.location.href = 'office.html'; return; }
+    if (a && b) { window.cornerLogin(em.value.trim(), pw.value, st); return; }
     st.textContent = '';
   });
 })();
+</script>
+<script>
+window.cornerLogin = function (email, pw, st) {
+  if (!window.Cloud || !Cloud.ready) { window.location.href = 'office.html'; return; }
+  st.textContent = 'Checking your details...';
+  Cloud.signIn(email, pw).then(function (r) {
+    if (r.error) st.textContent = r.error; else window.location.href = r.hasCharacter ? 'office.html' : 'character.html';
+  });
+};
+document.getElementById('forgot').addEventListener('click', function () {
+  if (!window.Cloud || !Cloud.ready) return;
+  var em = document.getElementById('email').value.trim(), st = document.getElementById('status');
+  if (!em) { setTimeout(function () { st.textContent = 'Type your email in the box above, then click this link again.'; }, 0); return; }
+  Cloud.reset(em).then(function (r) { st.textContent = r.error || 'If that email has an account, a reset link is on its way.'; });
+});
 </script>
 </body></html>

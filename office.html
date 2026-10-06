@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Your Office | Corner Office</title></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Your Office | Corner Office</title><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="cloud.js"></script></head><body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Public+Sans:wght@400;600&display=swap">
 <style>
 /* Layout: the pixel-art office fills the whole screen; the game menu, stats and a dialogue box float on top of it like a 16-bit game HUD. Single look. */
@@ -42,11 +42,18 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 .stat span { font-family: var(--pixel); font-size: 13px; letter-spacing: .06em; color: var(--mist); text-transform: uppercase; }
 .stat b { font-family: var(--body); font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat b.cash { color: var(--gold); }
+.sample[hidden] { display: none; }
 .sample { font-family: var(--pixel); font-weight: 600; font-size: 13px; text-transform: uppercase; color: var(--gold-ink); background: var(--gold); padding: 6px 8px; }
 .talk { margin-top: auto; align-self: center; width: min(100%, 720px); box-sizing: border-box; padding: 14px 16px; }
 .talk b { display: block; font-family: var(--pixel); font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
 #status { margin: 0; font-family: var(--body); font-size: 18px; line-height: 1.45; min-height: 2.9em; }
 .hud.scene .top { visibility: hidden; }
+.led { position: fixed; z-index: 0; overflow: hidden; white-space: nowrap; display: flex; align-items: center; font-family: "Courier New", ui-monospace, monospace; font-weight: 700; letter-spacing: .08em; color: #ffb347; text-shadow: 0 0 6px rgba(255, 179, 71, .7); background-image: radial-gradient(rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .55) 60%); background-size: 3px 3px; }
+.led2 { color: #6fe89a; text-shadow: 0 0 6px rgba(111, 232, 154, .7); }
+.led span { display: inline-block; padding-left: 100%; animation: tick 28s linear infinite; }
+@keyframes tick { to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .led span { animation: none; padding-left: 8px; } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .tbtn { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
 .tbtn[hidden], .card[hidden] { display: none; }
 .sbtn { min-height: 44px; padding: 8px 16px; font: 600 17px var(--pixel); color: var(--paper); background: #2a2650; border: 2px solid var(--ink); box-shadow: inset -2px -2px 0 #15122e, inset 2px 2px 0 #3d3870; cursor: pointer; }
@@ -67,6 +74,10 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 
 <canvas id="office" role="img" aria-label="Your starter office on the first floor, drawn as pixel art: two small windows, a basic desk, a market tracker on the wall, and your investor standing beside the desk."></canvas>
 
+<div class="led" id="led1" aria-hidden="true"><span></span></div>
+<div class="led led2" id="led2" aria-hidden="true"><span></span></div>
+<p class="sr" id="ledText"></p>
+
 <div class="hud">
   <div class="top">
     <nav class="menu box" aria-label="Game sections">
@@ -77,14 +88,14 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
         <button type="button" data-name="Marketplace" aria-pressed="false">Marketplace</button>
         <button type="button" data-name="Office" aria-pressed="false">Office</button>
       </div>
-      <button type="button" class="out replay" id="replay">REPLAY INTRO SCENE</button>
+      <button type="button" class="out replay" id="replay">REPLAY PREVIOUS CUT SCENE</button>
       <a class="out" href="index.html">&lt; LOG OUT</a>
     </nav>
     <div class="stats box">
-      <div class="stat"><span>Investor</span><b>MarketMaven</b></div>
-      <div class="stat"><span>Cash</span><b class="cash">$10,000</b></div>
-      <div class="stat"><span>Office</span><b>Floor 1</b></div>
-      <span class="sample">Sample data</span>
+      <div class="stat"><span>Investor</span><b id="userStat">MarketMaven</b></div>
+      <div class="stat"><span>Portfolio</span><b class="cash" id="cashStat">$1,000,000</b></div>
+      <div class="stat"><span>Office</span><b id="floorStat">Floor 1</b></div>
+      <span class="sample" id="sampleTag">Sample data</span>
     </div>
   </div>
   <div class="talk box">
@@ -94,8 +105,8 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   </div>
 </div>
 <div class="card" id="floorCard" hidden>
-  <p class="floor">FLOOR 1</p>
-  <p>Trade for three business days and beat the market to climb the ladder past Nepo Baby.</p>
+  <p class="floor" id="cardH">FLOOR 1</p>
+  <p id="cardP">Trade for three business days and beat the market to climb the ladder past Nepo Baby.</p>
   <button type="button" class="sbtn go big" id="floorGo">START TRADING</button>
 </div>
 
@@ -218,15 +229,15 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     }
     function dot(x, y, r, c) { g.fillStyle = c; g.beginPath(); g.arc(x * 2, y * 2, r * 2, 0, 7); g.fill(); }
     var SKIN = [['#f3cfae', '#d9a985'], ['#e0aa7a', '#bd875c'], ['#b87a4b', '#935c34'], ['#7a4a2c', '#5c3520']];
-    var HAIR = [['#241c18', '#4a3f37', '#120d0b'], ['#553622', '#7d583f', '#3a2314'], ['#dcb85c', '#f5e09c', '#b08c3a'], ['#a3401f', '#d0683a', '#7a2c13']];
+    var HAIR = [['#241c18', '#4a3f37', '#120d0b'], ['#553622', '#7d583f', '#3a2314'], ['#dcb85c', '#f5e09c', '#b08c3a'], ['#a3401f', '#d0683a', '#7a2c13'], ['#a9abb5', '#d3d5dc', '#7c7e88']];
     var DRESS = [['#2f3f7a', '#1f2c5c', '#4459a0'], ['#8e2440', '#6a1830', '#b03a5a'], ['#2a2a33', '#18181f', '#40404e']];
     var SHIRT = [['#f8f5ec', '#d2cfd8', '#e6e2d8'], ['#a3a9b6', '#7f8696', '#929aa8'], ['#30323e', '#1e2029', '#272934']];
     var PANTS = [['#ece6d6', '#cfc7b2', '#f7f2e6'], ['#c9a06b', '#a47d4c', '#dcb681'], ['#3f5f9a', '#2f4a7c', '#5676b3']];
     var SHOES = [['#7d4a28', '#a36a3d', '#2a180c'], ['#2b2b34', '#4a4a58', '#0e0e12']];
-    var SUIT = ['#2a2f55', '#1d2140', '#232848'];
+    var SUIT = ['#2a2f55', '#1d2140', '#232848'], SUIT2 = ['#454854', '#30323c', '#3a3d48'];
     return function (x, y, o, bob, blink) {
       var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], hd = HAIR[o.hairColor][2], f = o.gender === 'f', st = build(STYLES[f ? 'f' : 'm'][o.hair] || STYLES.m[0]), dr = f && !o.suit ? DRESS[o.dress || 0] : null, bc = o.belt ? '#1c1c22' : '#5a3a20';
-      var sh = SHIRT[o.suit ? 0 : o.shirt], pa = o.suit ? ['#2a2f55', '#1d2140', '#3a4070'] : PANTS[o.pants], so = SHOES[o.shoes], top = o.suit ? SUIT : sh;
+      var sh = SHIRT[o.suit ? 0 : o.shirt], pa = o.suit === 2 ? ['#454854', '#30323c', '#5a5d6a'] : o.suit ? ['#2a2f55', '#1d2140', '#3a4070'] : PANTS[o.pants], so = SHOES[o.shoes], top = o.suit === 2 ? SUIT2 : o.suit ? SUIT : sh, lap = o.suit === 2 ? '#5a5d6a' : '#3a4070';
       if (dr) {
         [4.2, 8.4].forEach(function (q) { R(x + q, y + 33, 3.4, 10.4, O); R(x + q + .5, y + 33, 2.4, 10.2, sk); R(x + q + 2.3, y + 33, .6, 10.2, skD); R(x + q - .3, y + 42.9, 4.2, 3.1, O); R(x + q + .2, y + 43.4, 3.2, 1.7, so[0]); R(x + q + .6, y + 43.4, 1.6, .5, so[1]); R(x + q + .2, y + 45.1, 3.2, .5, so[2]); });
       } else {
@@ -251,7 +262,7 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       if (dr) { R(x + 6.4, y + 17.5, .5, 6, dr[2]); R(x + 9.2, y + 18, .5, 5.5, dr[1]); }
       else if (o.suit) {
         quad([x + 5.8, y + 13.9, x + 10.2, y + 13.9, x + 8, y + 21], sh[0]); R(x + 7.6, y + 15, .8, 5.2, '#b3322c'); R(x + 7.4, y + 14.4, 1.2, 1, '#8f241f');
-        quad([x + 5.8, y + 13.9, x + 8, y + 21, x + 6.2, y + 19.6, x + 4.8, y + 15.2], '#3a4070'); quad([x + 10.2, y + 13.9, x + 8, y + 21, x + 9.8, y + 19.6, x + 11.2, y + 15.2], '#3a4070');
+        quad([x + 5.8, y + 13.9, x + 8, y + 21, x + 6.2, y + 19.6, x + 4.8, y + 15.2], lap); quad([x + 10.2, y + 13.9, x + 8, y + 21, x + 9.8, y + 19.6, x + 11.2, y + 15.2], lap);
         R(x + 7.9, y + 21, .3, 4.1, top[1]); R(x + 7.7, y + 22, .7, .6, '#c9a54a'); R(x + 7.7, y + 23.6, .7, .6, '#c9a54a'); R(x + 9.6, y + 17.6, 2, .5, '#f8f5ec');
       } else {
         R(x + 7.75, y + 15.5, .5, 9.6, sh[1]); for (var b = 0; b < 4; b++) R(x + 7.6, y + 16.6 + b * 2.3, .8, .6, o.shirt === 2 ? '#6b6f80' : '#9ea1b3');
@@ -284,6 +295,8 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
       if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
       R(x + 7, y + 10.9, 2, .3, skD);
+      if (o.cry) { R(x + 5.4, y + 7.6, .6, 2.4, '#7fd0ff'); R(x + 10, y + 7.6, .6, 3, '#7fd0ff'); R(x + 5.2, y + 10, 1, .6, '#7fd0ff'); R(x + 6.6, y + 10.6, 2.8, .4, '#5c2e22'); }
+      if (o.hotdog) { R(x + 11.4, y + 24.8, 5.4, 2.4, O); R(x + 11.8, y + 25.2, 4.6, 1.6, '#e3b565'); R(x + 11.6, y + 25.7, 5, .7, '#b5452f'); R(x + 12.4, y + 25.6, 3, .3, '#f6d25a'); }
     };
   }
   function loadChar() {
@@ -293,7 +306,8 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   }
 
   var person = makePerson(g, O), CHAR = loadChar();
-  var NEPO = { gender: 'm', skin: 0, hair: 2, hairColor: 2, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: true }, scene = { on: false, nx: -20, arrived: false, i: -1 };
+  var NEPO = { gender: 'm', skin: 0, hair: 3, hairColor: 2, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: true }, DAD = { gender: 'm', skin: 0, hair: 2, hairColor: 4, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: 2 };
+  var scene = { on: false, type: 'intro', nx: -20, dx: -20, dadIn: false, arrived: false, i: -1 }, SCENES = {};
 
   function draw(ms) {
     var t = ms / 1000, i, j;
@@ -385,11 +399,16 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     // investor
     var px = L + 98, bob = !reduce && Math.floor(t * 1.5) % 2 === 1, blink = !reduce && (t % 4) > 3.86;
     shadow(px + 8, fy + 11, 10, 2, .34);
+    // the two ticker boards on the wall (their moving text is laid over the top)
+    var by = Math.max(6.5, fy - 93);
+    [0, 8.5].forEach(function (o2) { R(L + .5, by + o2 - .5, 99, 8, O); R(L + 1, by + o2, 98, 7, '#2b2c3c'); R(L + 2, by + o2 + .5, 96, 6, '#07070c'); R(L + 1, by + o2, 98, .5, '#44465c'); });
     if (scene.on) {
-      var tg = L + 72;
+      var tg = L + 72, def = SCENES[scene.type] || {}, walk = Math.floor(t * 7) % 2 === 1;
       if (!scene.arrived) { scene.nx = Math.min(tg, scene.nx + .55); if (scene.nx >= tg) { scene.arrived = true; scene.i = 0; showLine(); } } else scene.nx = tg;
+      if (scene.dadIn) { var moving = scene.dx < L + 50; scene.dx = Math.min(L + 50, scene.dx + .6); shadow(scene.dx + 8, fy + 11, 10, 2, .34); person(scene.dx, fy + 10.4 - 46, DAD, moving ? walk : bob, false); }
       shadow(scene.nx + 8, fy + 11, 10, 2, .34);
-      person(scene.nx, fy + 10.4 - 46, NEPO, scene.arrived ? !bob : Math.floor(t * 7) % 2 === 1, !reduce && (t % 5) > 4.85);
+      var no = {}; for (var k2 in NEPO) no[k2] = NEPO[k2]; for (k2 in (def.nepo || {})) no[k2] = def.nepo[k2];
+      person(scene.nx, fy + 10.4 - 46, no, scene.arrived ? !bob : walk, !reduce && (t % 5) > 4.85);
     }
     person(px, fy + 10.4 - 46, CHAR, bob, blink);
 
@@ -405,44 +424,112 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     var menuW = wide ? Math.ceil(276 / f / 2) : 0;
     L = Math.round(menuW + Math.max(4, (UW - menuW - 208) / 2));
     fy = Math.round(UH - Math.max(44, UH * .3));
+    placeBoards();
     if (reduce) draw(0);
   }
   function loop(ms) { draw(ms); requestAnimationFrame(loop); }
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resize, 120); });
   resize(); if (!reduce) requestAnimationFrame(loop);
 
-  var st = document.getElementById('status'), btns = document.querySelectorAll('.items button'), who = document.getElementById('who'), me = who.textContent;
-  var LINES = [
-    ['Nepo Baby', 'Well, well. Fresh meat on Floor 1. Welcome to the jungle.'],
-    ['Nepo Baby', "Love the office. Two whole windows, and a front-row seat to the world's shittiest hot dog stand. Inspiring stuff."],
-    [me, 'Sorry, who are you?'],
-    ['Nepo Baby', "Nepo Baby. Floor 5. Don't bother writing it down. You'll never be up there to visit."],
-    ['Nepo Baby', "I'm on the fast track to Floor 10. It's amazing how far hard work gets you when your dad owns the building."],
-    ['Nepo Baby', "This is the show, rookie. And I'm going to dominate it. You included."],
-    ['Nepo Baby', 'Anyway, I just came down to say welcome. And goodbye. Most new hires are selling hot dogs by Friday.'],
-    [me, 'Keep my seat warm on Floor 10. I am the game, pal.'],
-    ['Nepo Baby', 'Sure you are, chief. Have fun down here with the rats.']
-  ];
-  function met() { try { return localStorage.getItem('cornerOfficeMetNepo') === '1'; } catch (e) { return false; } }
-  function showLine() { var l = LINES[scene.i]; who.textContent = l[0]; st.textContent = l[1]; document.getElementById('sceneNext').focus({ preventScroll: true }); }
-  function startScene() {
-    scene.on = true; scene.arrived = false; scene.i = -1; scene.nx = -20;
+  var st = document.getElementById('status'), btns = document.querySelectorAll('.items button'), who = document.getElementById('who'), me = (function () { try { return localStorage.getItem('cornerOfficeUser'); } catch (e) { return null; } })();
+  if (me) { document.getElementById('sampleTag').hidden = true; } else me = who.textContent;
+  who.textContent = me; document.getElementById('userStat').textContent = me;
+  var NB = 'Nepo Baby', ME = '\u0001', DADN = 'Mr. Baby';
+  SCENES.intro = { lines: [
+    [NB, 'Well, well. Fresh meat on Floor 1. Welcome to the jungle.'],
+    [NB, "Love the office. Two whole windows, and a front-row seat to the world's shittiest hot dog stand. Inspiring stuff."],
+    [ME, 'Sorry, who are you?'],
+    [NB, "Nepo Baby. Floor 5. Don't bother writing it down. You'll never be up there to visit."],
+    [NB, "I'm on the fast track to Floor 10. It's amazing how far hard work gets you when your dad owns the building."],
+    [NB, "This is the show, rookie. And I'm going to dominate it. You included."],
+    [NB, 'Anyway, I just came down to say welcome. And goodbye. Most new hires are selling hot dogs by Friday.'],
+    [ME, 'Keep my seat warm on Floor 10. I am the game, pal.'],
+    [NB, 'Sure you are, chief. Have fun down here with the rats.']
+  ], card: ['FLOOR 1', 'Trade for three business days and beat the market to climb the ladder past Nepo Baby.', 'START TRADING', 'career.html'] };
+  SCENES.win = { nepo: { cry: true }, dadAt: 3, lines: [
+    [NB, 'No. No, no, no. You beat the market? In three days?'],
+    [NB, "Do you know how long I've had Floor 5? Since my eighteenth birthday. It was a present!"],
+    [ME, 'Are you... crying?'],
+    [DADN, 'Nepo. Stop dripping on the carpet.'],
+    [NB, 'Dad, tell them they cheated. Tell them!'],
+    [DADN, "Pack your desk, son. You're down here with the rats now."],
+    [DADN, '\u0001, welcome to Floor 5.'],
+    [ME, "Thank you, sir. Nepo, the hot dog stand's still hiring."]
+  ], card: ['FLOOR 5', "You beat the Floor 1 challenge and took Nepo Baby's office. Your next challenge is coming soon.", 'BACK TO MY OFFICE', ''] };
+  SCENES.lose = { nepo: { hotdog: true }, lines: [
+    [NB, 'Knock, knock. I heard the market beat you. In three days. Honestly, that takes talent.'],
+    [NB, 'I brought you a hot dog. Think of it as a sample from your future employer.'],
+    [ME, "I'm not done."],
+    [NB, "Of course you're not, chief. Three more days. I'll save you an apron."]
+  ], card: ['FLOOR 1, AGAIN', 'The market won this round. Trade three more business days and beat it to climb past Nepo Baby.', 'TRY AGAIN', ''] };
+
+  function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lset(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function met() { return ls('cornerOfficeMetNepo') === '1'; }
+  /* Career numbers come from the Career Mode save: floor results run in blocks of three closes. */
+  function career() {
+    var S = null; try { S = JSON.parse(ls('cornerOfficeDaily.v1') || 'null'); } catch (e) {}
+    var D = (S && S.days) || [], cp = 1, cb = 1, res = [], k, won = false, blk = [];
+    D.forEach(function (r) { cp *= 1 + r.p; cb *= 1 + r.b; });
+    for (k = 0; k * 3 < D.length && !won; k++) { blk = D.slice(k * 3, k * 3 + 3); if (blk.length < 3) break; var p = 1, b = 1; blk.forEach(function (r) { p *= 1 + r.p; b *= 1 + r.b; }); won = p > b; res.push(won ? 'win' : 'lose'); blk = []; }
+    var fp = 1, fb = 1; blk.forEach(function (r) { fp *= 1 + r.p; fb *= 1 + r.b; });
+    return { started: !!(S && S.W), n: D.length, cp: cp - 1, cb: cb - 1, res: res, won: won, day: blk.length, fp: fp - 1, fb: fb - 1 };
+  }
+  function sp(x) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(2) + '%'; }
+  function boards() {
+    var c = career(), seen = +(ls('cornerOfficeSeenBlocks') || 0), up = c.won && seen >= c.res.length, a, b2, d1 = c.fp - c.fb, d2 = c.cp - c.cb;
+    document.getElementById('floorStat').textContent = up ? 'Floor 5' : 'Floor 1';
+    document.getElementById('cashStat').textContent = '$' + Math.round(1000000 * (1 + c.cp)).toLocaleString('en-US');
+    if (up) a = 'FLOOR 5  •  YOU BEAT THE FLOOR 1 CHALLENGE  •  NEXT CHALLENGE COMING SOON';
+    else if (!c.started) a = 'FLOOR 1  •  TRADE FOR THREE DAYS AND BEAT THE BENCHMARK  •  OPEN CAREER MODE TO BEGIN';
+    else a = 'FLOOR 1  •  TRADE FOR THREE DAYS AND BEAT THE BENCHMARK  •  ' + (c.day ? 'DAY ' + c.day + ' OF 3  •  YOU ' + sp(c.fp) + '  •  S&P 500 ' + sp(c.fb) + '  •  ' + (d1 >= 0 ? 'AHEAD BY ' : 'BEHIND BY ') + (Math.abs(d1) * 100).toFixed(2) + '%' : 'YOUR THREE DAYS START AT THE NEXT CLOSE') + (c.res.length && !c.won ? '  •  ATTEMPT ' + (c.res.length + 1) : '');
+    b2 = 'CAREER  •  ' + (c.n ? c.n + ' DAY' + (c.n > 1 ? 'S' : '') + ' TRADED  •  YOU ' + sp(c.cp) + '  •  S&P 500 ' + sp(c.cb) + '  •  ACTIVE ' + sp(d2) : 'NO DAYS TRADED YET  •  STARTING CASH $1,000,000');
+    document.querySelector('#led1 span').textContent = a; document.querySelector('#led2 span').textContent = b2;
+    document.getElementById('ledText').textContent = a + '. ' + b2;
+    return c;
+  }
+  function showLine() {
+    var l = SCENES[scene.type].lines[scene.i]; who.textContent = l[0] === ME ? me : l[0]; st.textContent = l[1].replace(ME, me);
+    document.getElementById('sceneNext').focus({ preventScroll: true });
+  }
+  function startScene(type, replay) {
+    scene.on = true; scene.type = type; scene.replay = !!replay; scene.arrived = false; scene.dadIn = false; scene.i = -1; scene.nx = -20; scene.dx = -20;
     document.querySelector('.hud').classList.add('scene'); document.getElementById('sceneBtns').hidden = false;
     who.textContent = '...'; st.textContent = 'Someone walks into your office.';
     if (reduce) { scene.arrived = true; scene.i = 0; showLine(); draw(0); }
   }
-  function endScene() { document.getElementById('floorCard').hidden = false; document.getElementById('floorGo').focus(); }
+  function endScene() {
+    var c = SCENES[scene.type].card;
+    document.getElementById('cardH').textContent = c[0]; document.getElementById('cardP').textContent = c[1]; document.getElementById('floorGo').textContent = scene.replay ? 'BACK TO MY OFFICE' : c[2];
+    document.getElementById('floorCard').hidden = false; document.getElementById('floorGo').focus();
+  }
   document.getElementById('sceneNext').addEventListener('click', function () {
-    if (!scene.arrived) { scene.arrived = true; scene.i = 0; showLine(); } else if (++scene.i >= LINES.length) endScene(); else showLine();
+    var def = SCENES[scene.type];
+    if (!scene.arrived) { scene.arrived = true; scene.i = 0; showLine(); }
+    else if (++scene.i >= def.lines.length) endScene();
+    else { if (def.dadAt === scene.i) { scene.dadIn = true; if (reduce) scene.dx = 1e9; } showLine(); }
     if (reduce) draw(0);
   });
   document.getElementById('sceneSkip').addEventListener('click', endScene);
-  document.getElementById('replay').addEventListener('click', function () { try { localStorage.removeItem('cornerOfficeMetNepo'); } catch (e) {} startScene(); });
-  document.getElementById('floorGo').addEventListener('click', function () { try { localStorage.setItem('cornerOfficeMetNepo', '1'); } catch (e) {} window.location.href = 'career.html'; });
+  document.getElementById('floorGo').addEventListener('click', function () {
+    var type = scene.type, go = SCENES[type].card[3];
+    if (!scene.replay) { lset('cornerOfficeLastScene', type); if (type === 'intro') lset('cornerOfficeMetNepo', '1'); else lset('cornerOfficeSeenBlocks', String(+(ls('cornerOfficeSeenBlocks') || 0) + 1)); }
+    if (go && !scene.replay) { window.location.href = go; return; }
+    scene.on = false; document.getElementById('floorCard').hidden = true; document.querySelector('.hud').classList.remove('scene'); document.getElementById('sceneBtns').hidden = true;
+    who.textContent = me; st.textContent = 'Back to work.'; boards(); if (reduce) draw(0);
+  });
+  document.getElementById('replay').addEventListener('click', function () { startScene(ls('cornerOfficeLastScene') || 'intro', true); });
+  function placeBoards() {
+    var u = window.innerWidth / UW, by = Math.max(6.5, fy - 93);
+    [['led1', 0], ['led2', 8.5]].forEach(function (b3) { var el = document.getElementById(b3[0]); el.style.left = (L + 2) * u + 'px'; el.style.top = (by + b3[1] + .5) * u + 'px'; el.style.width = 96 * u + 'px'; el.style.height = 6 * u + 'px'; el.style.fontSize = Math.max(10, 4.2 * u) + 'px'; });
+  }
+  placeBoards();
+  (function () { var c = boards(), seen = +(ls('cornerOfficeSeenBlocks') || 0); if (met() && c.res.length > seen) setTimeout(function () { startScene(c.res[seen], false); }, 700); })();
   btns.forEach(function (b) {
     b.addEventListener('click', function () {
       btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
-      if (b.dataset.name === 'Career Mode') { if (met()) window.location.href = 'career.html'; else startScene(); return; }
+      if (b.dataset.name === 'Career Mode') { if (met()) window.location.href = 'career.html'; else startScene('intro', false); return; }
+      if (b.dataset.name === 'Competitions') { window.location.href = 'leaderboard.html'; return; }
       st.textContent = b.dataset.name + ' opens from here. That part of the game is not built yet.';
     });
   });

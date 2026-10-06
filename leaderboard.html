@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Leaderboard | Corner Office</title><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="cloud.js"></script></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@600;700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: one scoreboard table in a game-style box, ranked by active performance. Single look, shared with the office HUD. */
+:root { color-scheme: dark; --ink: #1a1423; --hud: #1b1836; --hud2: #2a2650; --hud-edge: #f4ead2; --paper: #f4ead2; --mist: #b9b3d6; --gold: #ffbe5c; --pos: #74d6a0; --neg: #f2a092;
+  --pixel: "Pixelify Sans", "Trebuchet MS", Verdana, sans-serif; --body: "Public Sans", "Segoe UI", system-ui, sans-serif; }
+html, body { min-height: 100%; }
+body { background: #12102a; color: var(--paper); font-family: var(--body); font-size: 16px; }
+.wrap { box-sizing: border-box; max-width: 980px; margin-inline: auto; padding-block: 28px; padding-inline: 16px; display: flex; flex-direction: column; gap: 18px; }
+h1 { margin: 0; font-family: var(--pixel); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.05; }
+h1 em { font-style: normal; color: var(--gold); }
+p { margin: 0; color: var(--mist); max-width: 62ch; }
+.box { background: var(--hud); border: 3px solid var(--hud-edge); box-shadow: 0 0 0 3px var(--ink), 6px 6px 0 3px rgba(0, 0, 0, .45); padding: 6px 14px 14px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 11px 10px; text-align: left; border-bottom: 1px solid #3d3870; white-space: nowrap; }
+th { font: 600 13px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); }
+td.num, th.num { text-align: right; }
+td.rank { font-family: var(--pixel); font-weight: 700; color: var(--gold); }
+tr.me td { background: var(--hud2); font-weight: 700; }
+tbody tr:last-child td { border-bottom: 0; }
+.pos { color: var(--pos); } .neg { color: var(--neg); }
+.back { align-self: flex-start; font: 600 17px var(--pixel); color: var(--paper); text-decoration: none; padding: 10px 14px; min-height: 24px; background: var(--hud2); border: 2px solid var(--ink); }
+.back:hover { color: var(--gold); }
+.back:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+</style>
+<div class="wrap">
+  <div><h1>Leader<em>board</em></h1><p>Every investor in the building, ranked by active performance: how far their career return is ahead of the market they compete against.</p></div>
+  <div class="box"><div class="scroll"><table>
+    <thead><tr><th>Rank</th><th>Investor</th><th>Benchmark</th><th class="num">Days traded</th><th class="num">Career return</th><th class="num">Active performance</th><th class="num">Floor</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="7">Loading the standings...</td></tr></tbody>
+  </table></div></div>
+  <p id="note" role="status"></p>
+  <a class="back" href="office.html">&lt; BACK TO OFFICE</a>
+</div>
+<script>
+(function () {
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function sp(x) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(2) + '%'; }
+  function cls(x) { return x > 1e-9 ? 'pos' : x < -1e-9 ? 'neg' : ''; }
+  function show(rows, me) {
+    document.getElementById('rows').innerHTML = rows.length ? rows.map(function (r, i) {
+      return '<tr class="' + (r.id === me ? 'me' : '') + '"><td class="rank">' + (i + 1) + '</td><td>' + esc(r.username) + (r.id === me ? ' (you)' : '') + '</td><td>' + esc(r.benchmark) + '</td><td class="num">' + r.days_traded + '</td><td class="num ' + cls(r.career_return) + '">' + sp(r.career_return) + '</td><td class="num ' + cls(r.active_return) + '">' + sp(r.active_return) + '</td><td class="num">' + r.floor + '</td></tr>';
+    }).join('') : '<tr><td colspan="7">No investors yet.</td></tr>';
+  }
+  var note = document.getElementById('note');
+  if (window.Cloud && Cloud.ready) {
+    Cloud.push().then(Cloud.leaderboard).then(function (r) { show(r.rows, r.me); note.textContent = r.error ? 'The standings could not be loaded: ' + r.error : 'Standings update each time a player saves.'; });
+  } else {
+    var S = null, D, cp = 1, cb = 1; try { S = JSON.parse(localStorage.getItem('cornerOfficeDaily.v1') || 'null'); } catch (e) {}
+    D = (S && S.days) || []; D.forEach(function (r) { cp *= 1 + r.p; cb *= 1 + r.b; });
+    var name = 'You'; try { name = localStorage.getItem('cornerOfficeUser') || 'You'; } catch (e) {}
+    show([{ id: 1, username: name, benchmark: 'S&P 500', days_traded: D.length, career_return: cp - 1, active_return: cp - cb, floor: 1 }], 1);
+    note.textContent = 'Demo mode: accounts are not connected, so only your own record is shown.';
+  }
+})();
+</script>
+</body></html>

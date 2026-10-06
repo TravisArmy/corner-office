@@ -1,0 +1,48 @@
+CORNER OFFICE: ONE-TIME ACCOUNT SETUP
+=====================================
+
+1. In Supabase, open your project, click "SQL Editor", click "New query",
+   paste everything between the two lines of dashes below, and click "Run".
+
+------------------------------------------------------------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users on delete cascade,
+  username text not null,
+  days_traded integer not null default 0,
+  benchmark text not null default 'S&P 500',
+  career_return double precision not null default 0,
+  bench_return double precision not null default 0,
+  active_return double precision not null default 0,
+  floor integer not null default 1,
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists profiles_username_lower on public.profiles (lower(username));
+
+create table if not exists public.saves (
+  id uuid primary key references auth.users on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+alter table public.saves enable row level security;
+
+create policy "Leaderboard is readable" on public.profiles for select using (true);
+create policy "Players create their own profile" on public.profiles for insert with check (auth.uid() = id);
+create policy "Players update their own profile" on public.profiles for update using (auth.uid() = id);
+create policy "Players read their own save" on public.saves for select using (auth.uid() = id);
+create policy "Players create their own save" on public.saves for insert with check (auth.uid() = id);
+create policy "Players update their own save" on public.saves for update using (auth.uid() = id);
+------------------------------------------------------------
+
+2. Recommended for testing with friends: in Supabase open "Authentication",
+   then "Sign In / Providers" (or "Providers"), click "Email", and switch OFF
+   "Confirm email". New players can then start playing straight away.
+   With it switched on, each player must click a link in an email first, and
+   Supabase only sends a few of those emails per hour on the free plan.
+
+3. Open config.js in Notepad and paste your Project URL and your anon
+   (publishable) key between the quotes. Save it.
+
+4. Upload every file in this folder to GitHub, the same way as before.
+   (You do not need to upload this SETUP.txt file.)
