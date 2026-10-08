@@ -1,0 +1,23 @@
+CORNER OFFICE - START EVERYONE FRESH
+====================================
+
+Do this AFTER you upload the new files to GitHub.
+
+1. Go to supabase.com and open your project.
+2. In the left menu, click "SQL Editor".
+3. Click "New query".
+4. Copy the one line below, paste it into the box, and click "Run":
+
+delete from auth.users;
+
+5. Supabase may warn you that this deletes rows. That is what we want. Confirm it.
+
+What this does:
+- Deletes every account, every saved game and every leaderboard row.
+- Keeps the closing-price tables from Part 2 (closes, market_days), so no market data is lost.
+
+Afterwards:
+- Everyone, including you, clicks "Create Investor" and signs up again.
+  The same email addresses and investor names can be used again.
+- The new game files also clear the old saved game out of each person's browser
+  the first time they open the site, so nobody is left with leftovers.

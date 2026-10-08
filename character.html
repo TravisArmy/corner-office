@@ -142,7 +142,71 @@ legend { padding: 0; font-family: var(--pixel); font-weight: 600; font-size: 18p
     var PANTS = [['#ece6d6', '#cfc7b2', '#f7f2e6'], ['#c9a06b', '#a47d4c', '#dcb681'], ['#3f5f9a', '#2f4a7c', '#5676b3']];
     var SHOES = [['#7d4a28', '#a36a3d', '#2a180c'], ['#2b2b34', '#4a4a58', '#0e0e12']];
     var SUIT = ['#2a2f55', '#1d2140', '#232848'], SUIT2 = ['#454854', '#30323c', '#3a3d48'];
+    function face(x, y, o, sk, skD, st, hc, hh, hd, f, blink) {
+      // head
+      R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
+      g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
+      g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
+      g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
+      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)');
+      g.restore();
+      hairFront(x, y, st, hc, hh, hd);
+      var br = o.hairColor > 1 ? hc : '#2b1e16', E = '#2b1e16', lk = (o.look || 0) * .5, sc = !!o.scared, by0 = sc ? 4.4 : 5.2;
+      // eyebrows (raised when scared)
+      R(x + 4.8, y + by0, 2.4, .5, br); R(x + 8.8, y + by0, 2.4, .5, br);
+      // eyes: both pupils sit in the same spot of each eye, so they look the same way
+      if (blink && !sc) { R(x + 5, y + 6.8, 2, .4, E); R(x + 9, y + 6.8, 2, .4, E); }
+      else if (sc) { R(x + 4.8, y + 5.6, 2.4, 2.2, '#ffffff'); R(x + 8.8, y + 5.6, 2.4, 2.2, '#ffffff'); R(x + 5.8 + lk, y + 6.4, .5, .8, E); R(x + 9.8 + lk, y + 6.4, .5, .8, E); }
+      else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.5 + lk, y + 6.2, 1, 1.3, E); R(x + 9.5 + lk, y + 6.2, 1, 1.3, E); R(x + 5, y + 6, 2, .3, E); R(x + 9, y + 6, 2, .3, E); if (f) { R(x + 4.5, y + 5.8, .6, .4, E); R(x + 10.9, y + 5.8, .6, .4, E); } }
+      R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
+      if (sc) { R(x + 7.3, y + 9.8, 1.4, 1.2, '#5c2e22'); R(x + 12.6, y + 2.6, .8, 1.4, '#9fdcff'); R(x + 12.4, y + 3.6, 1.2, .8, '#9fdcff'); }
+      else if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
+      if (!sc) R(x + 7, y + 10.9, 2, .3, skD);
+      if (o.cry) { R(x + 5.4, y + 7.6, .6, 2.4, '#7fd0ff'); R(x + 10, y + 7.6, .6, 3, '#7fd0ff'); R(x + 5.2, y + 10, 1, .6, '#7fd0ff'); R(x + 6.6, y + 10.6, 2.8, .4, '#5c2e22'); }
+      if (o.hotdog) { R(x + 11.4, y + 24.8, 5.4, 2.4, O); R(x + 11.8, y + 25.2, 4.6, 1.6, '#e3b565'); R(x + 11.6, y + 25.7, 5, .7, '#b5452f'); R(x + 12.4, y + 25.6, 3, .3, '#f6d25a'); }
+    }
+    /* A much bigger build (Buck): broad V-shaped torso, huge arms with rolled sleeves, grey vest, blue jeans. */
+    function drawBig(x, y, o, bob, blink) {
+      var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], hd = HAIR[o.hairColor][2], st = build(STYLES.m[o.hair] || STYLES.m[0]);
+      var J = ['#3d5f9e', '#2c4777', '#5a7cbc'], SH = ['#f8f5ec', '#d2cfd8'], V = ['#7c808c', '#5d616c', '#999daa'], so = SHOES[o.shoes || 0];
+      // legs (jeans) and shoes
+      R(x + 1.5, y + 27, 13, 16.5, O); R(x + 2, y + 27.5, 12, 4, J[0]); R(x + 2, y + 31, 5.6, 12, J[0]); R(x + 8.4, y + 31, 5.6, 12, J[0]);
+      R(x + 7.6, y + 31.5, .8, 11.5, O); R(x + 6.8, y + 28, .6, 15, J[1]); R(x + 13.2, y + 28, .8, 15, J[1]); R(x + 3.4, y + 29, .4, 13.5, J[2]); R(x + 9.8, y + 29, .4, 13.5, J[2]); R(x + 2, y + 42.3, 12, .7, J[1]);
+      [1.4, 8.4].forEach(function (q) { R(x + q - .5, y + 42.9, 7.2, 3.1, O); R(x + q, y + 43.4, 6.2, 1.7, so[0]); R(x + q + .5, y + 43.4, 2.6, .5, so[1]); R(x + q, y + 45.1, 6.2, .5, so[2]); });
+      y += d;
+      // arms: big sleeves rolled to the elbow, thick forearms
+      [[-4.5, 1], [14.5, 0]].forEach(function (a) {
+        var ax = x + a[0];
+        var bx = a[1] ? ax - 1.5 : ax + 6;
+        R(ax - .5, y + 9.8, 7, 10.2, O); R(bx, y + 11.2, 1.5, 6.4, O); R(ax, y + 10.3, 6, 8.4, SH[0]); R(a[1] ? bx + .5 : bx, y + 11.7, 1, 5.4, SH[0]);
+        R(a[1] ? bx + .5 : ax + 5.4, y + 12.4, 1.1, 4.4, SH[1]); R(ax + (a[1] ? 1.6 : 1.4), y + 12, 3, .5, SH[1]); R(ax + (a[1] ? 1 : 3.2), y + 14.2, 1.8, .4, SH[1]);
+        R(ax, y + 18.2, 6, 1.6, SH[1]); R(ax, y + 18.2, 6, .4, '#bdb9c4');
+        R(ax, y + 19.8, 6, 8.2, O); R(ax + .5, y + 19.8, 5, 7.8, sk); R(ax + (a[1] ? .5 : 4.3), y + 19.8, 1.2, 7.8, skD); R(ax + 2.4, y + 22, .4, 3.4, skD);
+        R(ax + .3, y + 27.2, 5.4, 3.6, O); R(ax + .8, y + 27.6, 4.4, 2.8, sk); R(ax + .8, y + 29.8, 4.4, .6, skD); R(ax + (a[1] ? 3.6 : 1.6), y + 28, .4, 2, skD);
+      });
+      // torso: shirt, then the vest over it
+      quad([x - 1.2, y + 9.4, x + 17.2, y + 9.4, x + 14.4, y + 28.4, x + 1.6, y + 28.4], O);
+      quad([x - .6, y + 9.9, x + 16.6, y + 9.9, x + 13.9, y + 27.9, x + 2.1, y + 27.9], SH[0]);
+      quad([x + 1.4, y + 9.9, x + 14.6, y + 9.9, x + 13.9, y + 27.9, x + 2.1, y + 27.9], O);
+      quad([x + 1.9, y + 10.2, x + 14.1, y + 10.2, x + 13.4, y + 27.6, x + 2.6, y + 27.6], V[0]);
+      quad([x + 11.6, y + 10.2, x + 14.1, y + 10.2, x + 13.4, y + 27.6, x + 11.2, y + 27.6], V[1]);
+      R(x + 3.2, y + 15.6, 4.2, .5, V[1]); R(x + 8.6, y + 15.6, 4.2, .5, V[1]); R(x + 3, y + 11, 1.4, 4, V[2]);
+      quad([x + 5.4, y + 10.2, x + 10.6, y + 10.2, x + 8, y + 17.6], O); quad([x + 5.9, y + 10.2, x + 10.1, y + 10.2, x + 8, y + 16.8], SH[0]);
+      R(x + 7.8, y + 13, .4, 3.6, SH[1]);
+      [18.6, 21.4, 24.2].forEach(function (b) { R(x + 7.5, y + b, 1, 1, '#2f3038'); });
+      R(x + 2.4, y + 26.6, 11.2, .6, V[1]);
+      quad([x + 2.6, y + 27.4, x + 7.8, y + 27.4, x + 5, y + 29.2], O); quad([x + 8.2, y + 27.4, x + 13.4, y + 27.4, x + 11, y + 29.2], O);
+      quad([x + 3.2, y + 27.4, x + 7.2, y + 27.4, x + 5, y + 28.6], V[1]); quad([x + 8.8, y + 27.4, x + 12.8, y + 27.4, x + 11, y + 28.6], V[1]);
+      // thick neck and collar
+      R(x + 4.6, y + 7.4, 6.8, 3.4, skD); R(x + 4.6, y + 7.4, 6.8, .9, 'rgba(40,15,5,.25)');
+      quad([x + 3.6, y + 10, x + 6.4, y + 9.4, x + 7.8, y + 12.6, x + 4.6, y + 12.2], O); quad([x + 4.1, y + 10.3, x + 6.2, y + 9.9, x + 7.4, y + 12, x + 4.9, y + 11.8], SH[0]);
+      quad([x + 12.4, y + 10, x + 9.6, y + 9.4, x + 8.2, y + 12.6, x + 11.4, y + 12.2], O); quad([x + 11.9, y + 10.3, x + 9.8, y + 9.9, x + 8.6, y + 12, x + 11.1, y + 11.8], SH[1]);
+      face(x, y - 3.4, o, sk, skD, st, hc, hh, hd, false, blink);
+      // a little stubble on the jaw
+      for (var s = 0; s < 6; s++) R(x + 5.2 + s * 1.1, y + 7.6 - (s === 0 || s === 5 ? .6 : 0), .4, .4, 'rgba(40,25,15,.35)');
+    }
     return function (x, y, o, bob, blink) {
+      if (o.big) { drawBig(x, y, o, bob, blink); return; }
       var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], hd = HAIR[o.hairColor][2], f = o.gender === 'f', st = build(STYLES[f ? 'f' : 'm'][o.hair] || STYLES.m[0]), dr = f && !o.suit ? DRESS[o.dress || 0] : null, bc = o.belt ? '#1c1c22' : '#5a3a20';
       var sh = SHIRT[o.suit ? 0 : o.shirt], pa = o.suit === 2 ? ['#454854', '#30323c', '#5a5d6a'] : o.suit ? ['#2a2f55', '#1d2140', '#3a4070'] : PANTS[o.pants], so = SHOES[o.shoes], top = o.suit === 2 ? SUIT2 : o.suit ? SUIT : sh, lap = o.suit === 2 ? '#5a5d6a' : '#3a4070';
       if (dr) {
@@ -187,23 +251,7 @@ legend { padding: 0; font-family: var(--pixel); font-weight: 600; font-size: 18p
       if (o.suit) { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, top[1]); }
       else if (dr) { R(x + 3.5, y + 24.3, 9, .8, bc); R(x + 7.4, y + 24.2, 1.2, 1, '#e8b84a'); }
       else { R(x + 3, y + 25 - d, 10, 1.5, O); R(x + 3.5, y + 25.3 - d, 9, .8, bc); R(x + 7.3, y + 25.2 - d, 1.4, 1, '#e8b84a'); R(x + 7.7, y + 25.5 - d, .6, .4, bc); }
-      // head
-      R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
-      g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
-      g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
-      g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
-      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)');
-      g.restore();
-      hairFront(x, y, st, hc, hh, hd);
-      var br = o.hairColor > 1 ? hc : '#2b1e16';
-      R(x + 4.8, y + 5.2, 2.4, .5, br); R(x + 8.8, y + 5.2, 2.4, .5, br);
-      if (blink) { R(x + 5, y + 6.8, 2, .4, '#2b1e16'); R(x + 9, y + 6.8, 2, .4, '#2b1e16'); }
-      else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.8, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 9.6, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 5, y + 6, 2, .3, '#2b1e16'); R(x + 9, y + 6, 2, .3, '#2b1e16'); if (f) { R(x + 4.5, y + 5.8, .6, .4, '#2b1e16'); R(x + 10.9, y + 5.8, .6, .4, '#2b1e16'); } }
-      R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
-      if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
-      R(x + 7, y + 10.9, 2, .3, skD);
-      if (o.cry) { R(x + 5.4, y + 7.6, .6, 2.4, '#7fd0ff'); R(x + 10, y + 7.6, .6, 3, '#7fd0ff'); R(x + 5.2, y + 10, 1, .6, '#7fd0ff'); R(x + 6.6, y + 10.6, 2.8, .4, '#5c2e22'); }
-      if (o.hotdog) { R(x + 11.4, y + 24.8, 5.4, 2.4, O); R(x + 11.8, y + 25.2, 4.6, 1.6, '#e3b565'); R(x + 11.6, y + 25.7, 5, .7, '#b5452f'); R(x + 12.4, y + 25.6, 3, .3, '#f6d25a'); }
+      face(x, y, o, sk, skD, st, hc, hh, hd, f, blink);
     };
   }
   function loadChar() {

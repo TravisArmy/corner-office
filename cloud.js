@@ -3,19 +3,38 @@
    With no values in config.js the site runs in local demo mode and this file does nothing. */
 (function () {
   var cfg = window.CORNER_CONFIG || {}, ready = !!(cfg.supabaseUrl && cfg.supabaseKey && window.supabase);
-  var KEYS = ['cornerOfficeCharacter', 'cornerOfficeDaily.v1', 'cornerOfficeMetNepo', 'cornerOfficeSeenBlocks', 'cornerOfficeLastScene', 'cornerOfficeScreen'];
-  var PROTECTED = /(office|career|character|leaderboard)\.html$/;
+  var KEYS = ['cornerOfficeCharacter', 'cornerOfficeDaily.v1', 'cornerOfficeMetNepo', 'cornerOfficeSeenBlocks', 'cornerOfficeLastScene', 'cornerOfficeScreen', 'cornerOfficeMessages', 'cornerOfficePM.v1'];
+  var PROTECTED = /(office|career|portfolio|character|leaderboard)\.html$/;
   var sb = ready ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey) : null, uid = null, timer = null, rawSet = Storage.prototype.setItem, rawDel = Storage.prototype.removeItem;
   function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function msg(e) { return (e && (e.message || e.error_description)) || 'Something went wrong. Please try again.'; }
 
+  /* Floor challenge blocks: three closes each. A restart ("cut") abandons the block it falls in, and the next block starts there. */
+  function blocks(D, cuts) {
+    var i = 0, res = [], cs = (cuts || []).slice().sort(function (a, b) { return a - b; });
+    for (var guard = 0; guard < 100000; guard++) {
+      var e = i + 3, nc = null;
+      for (var q = 0; q < cs.length; q++) if (cs[q] > i) { nc = cs[q]; break; }
+      if (nc !== null && nc < e && nc <= D.length) { i = nc; continue; }
+      if (D.length < e) return { res: res, won: false, cur: D.slice(i), from: i };
+      var p = 1, b = 1; D.slice(i, e).forEach(function (r) { p *= 1 + r.p; b *= 1 + r.b; });
+      res.push(p > b ? 'win' : 'lose');
+      if (p > b) return { res: res, won: true, cur: D.slice(i, e), from: i };
+      i = e;
+    }
+    return { res: res, won: false, cur: [], from: D.length };
+  }
   function stats() {
     var S = null; try { S = JSON.parse(get('cornerOfficeDaily.v1') || 'null'); } catch (e) {}
-    var D = (S && S.days) || [], cp = 1, cb = 1, won = false, done = 0, k;
+    var D = (S && S.days) || [], cp = 1, cb = 1, B = blocks(D, S && S.cuts);
     D.forEach(function (r) { cp *= 1 + r.p; cb *= 1 + r.b; });
-    for (k = 0; k * 3 + 3 <= D.length && !won; k++) { var p = 1, b = 1; D.slice(k * 3, k * 3 + 3).forEach(function (r) { p *= 1 + r.p; b *= 1 + r.b; }); won = p > b; done++; }
     var seen = +(get('cornerOfficeSeenBlocks') || 0);
-    return { days_traded: D.length, benchmark: 'S&P 500', career_return: cp - 1, bench_return: cb - 1, active_return: cp - cb, floor: won && seen >= done ? 5 : 1 };
+    // Portfolio Management: value after loans (each loan resets to $10,000,000)
+    var P = null; try { P = JSON.parse(get('cornerOfficePM.v1') || 'null'); } catch (e) {}
+    var PD = (P && P.days) || [], L = (P && P.loans) || [], v = 10000000, li = 0;
+    PD.forEach(function (r, k) { while (li < L.length && L[li].at <= k) { v = 10000000; li++; } v *= 1 + r.p; });
+    if (li < L.length) v = 10000000;
+    return { days_traded: D.length, benchmark: 'S&P 500', career_return: cp - 1, bench_return: cb - 1, active_return: cp - cb, floor: B.won && seen >= B.res.length ? 5 : 1, pm_value: Math.round(v), pm_loans: L.length };
   }
   function push() {
     if (!ready || !uid) return Promise.resolve();
@@ -51,6 +70,7 @@
 
   var Cloud = window.Cloud = {
     ready: ready,
+    realPrices: ready && cfg.prices !== 'simulated',
     signUp: function (name, email, pw) {
       var pat = name.replace(/([\\%_])/g, '\\$1');
       return sb.from('profiles').select('id').ilike('username', pat).limit(1).then(function (r) {
@@ -74,10 +94,19 @@
     reset: function (email) { return sb.auth.resetPasswordForEmail(email).then(function (r) { return r.error ? { error: msg(r.error) } : {}; }); },
     signOut: function () { return push().then(function () { return sb.auth.signOut(); }).then(clearLocal, clearLocal); },
     leaderboard: function () {
-      return sb.from('profiles').select('id,username,days_traded,benchmark,career_return,bench_return,active_return,floor').order('active_return', { ascending: false }).limit(100)
+      return sb.from('profiles').select('id,username,floor,pm_value,pm_loans,days_traded').order('floor', { ascending: false }).order('pm_loans', { ascending: true }).order('pm_value', { ascending: false }).limit(200)
         .then(function (r) { return { rows: r.data || [], me: uid, error: r.error ? msg(r.error) : null }; });
     },
-    push: push
+    push: push,
+    // real closing prices
+    refreshPrices: function () { return sb.functions.invoke('fetch-closes', { body: {} }).then(function (r) { return r.data || null; }, function () { return null; }); },
+    marketDays: function (from) { return sb.from('market_days').select('d').gte('d', from).order('d', { ascending: true }).limit(400).then(function (r) { return (r.data || []).map(function (x) { return x.d; }); }); },
+    dayBefore: function (d) { return sb.from('market_days').select('d').lt('d', d).order('d', { ascending: false }).limit(1).then(function (r) { return r.data && r.data[0] ? r.data[0].d : null; }); },
+    closes: function (d) {
+      var page = function (a) { return sb.from('closes').select('t,c').eq('d', d).range(a, a + 999).then(function (r) { return r.data || []; }); };
+      return Promise.all([page(0), page(1000)]).then(function (p) { var m = {}; p[0].concat(p[1]).forEach(function (x) { m[x.t] = x.c; }); return m; });
+    },
+    watch: function (tk) { if (ready && uid) sb.from('watch').upsert({ t: tk }).then(function () {}, function () {}); }
   };
   if (!ready) return;
 
@@ -88,8 +117,11 @@
 
   var guarded = PROTECTED.test(location.pathname);
   if (guarded) document.documentElement.style.visibility = 'hidden';
-  sb.auth.getSession().then(function (r) {
-    var s = r.data && r.data.session;
+  /* Game version gate: when the game is reset for a fresh start, every browser drops its old copy and signs out once. */
+  var GEN = '2', fresh = get('cornerOfficeGen') !== GEN;
+  if (fresh) { clearLocal(); try { rawSet.call(localStorage, 'cornerOfficeGen', GEN); } catch (e) {} }
+  (fresh ? sb.auth.signOut({ scope: 'local' }).catch(function () {}).then(function () { return sb.auth.getSession(); }) : sb.auth.getSession()).then(function (r) {
+    var s = r && r.data && r.data.session;
     if (s) { uid = s.user.id; document.documentElement.style.visibility = ''; }
     else if (guarded) location.replace('login.html');
   });

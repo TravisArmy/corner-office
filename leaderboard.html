@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Leaderboard | Corner Office</title><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="cloud.js"></script></head><body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@600;700&family=Public+Sans:wght@400;600;700&display=swap">
 <style>
-/* Layout: one scoreboard table in a game-style box, ranked by active performance. Single look, shared with the office HUD. */
+/* Layout: one scoreboard table in a game-style box, ranked by floor, then fewest loans, then Portfolio Management value. Single look, shared with the office HUD. */
 :root { color-scheme: dark; --ink: #1a1423; --hud: #1b1836; --hud2: #2a2650; --hud-edge: #f4ead2; --paper: #f4ead2; --mist: #b9b3d6; --gold: #ffbe5c; --pos: #74d6a0; --neg: #f2a092;
   --pixel: "Pixelify Sans", "Trebuchet MS", Verdana, sans-serif; --body: "Public Sans", "Segoe UI", system-ui, sans-serif; }
 html, body { min-height: 100%; }
@@ -25,10 +25,10 @@ tbody tr:last-child td { border-bottom: 0; }
 .back:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 </style>
 <div class="wrap">
-  <div><h1>Leader<em>board</em></h1><p>Every investor in the building, ranked by active performance: how far their career return is ahead of the market they compete against.</p></div>
+  <div><h1>Leader<em>board</em></h1><p>Every investor in the building. Ranked by floor first (from Career Mode), then by fewest loans, then by the value of their Portfolio Management account.</p></div>
   <div class="box"><div class="scroll"><table>
-    <thead><tr><th>Rank</th><th>Investor</th><th>Benchmark</th><th class="num">Days traded</th><th class="num">Career return</th><th class="num">Active performance</th><th class="num">Floor</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="7">Loading the standings...</td></tr></tbody>
+    <thead><tr><th>Rank</th><th>Investor</th><th class="num">Floor</th><th class="num">Portfolio Management value</th><th class="num">Loans taken</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="5">Loading the standings...</td></tr></tbody>
   </table></div></div>
   <p id="note" role="status"></p>
   <a class="back" href="office.html">&lt; BACK TO OFFICE</a>
@@ -38,19 +38,24 @@ tbody tr:last-child td { border-bottom: 0; }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function sp(x) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(2) + '%'; }
   function cls(x) { return x > 1e-9 ? 'pos' : x < -1e-9 ? 'neg' : ''; }
+  function money(x) { return '$' + Math.round(+x || 0).toLocaleString('en-US'); }
+  function rank(rows) { return rows.slice().sort(function (a, b) { return (b.floor || 1) - (a.floor || 1) || (a.pm_loans || 0) - (b.pm_loans || 0) || (+b.pm_value || 0) - (+a.pm_value || 0); }); }
   function show(rows, me) {
+    rows = rank(rows);
     document.getElementById('rows').innerHTML = rows.length ? rows.map(function (r, i) {
-      return '<tr class="' + (r.id === me ? 'me' : '') + '"><td class="rank">' + (i + 1) + '</td><td>' + esc(r.username) + (r.id === me ? ' (you)' : '') + '</td><td>' + esc(r.benchmark) + '</td><td class="num">' + r.days_traded + '</td><td class="num ' + cls(r.career_return) + '">' + sp(r.career_return) + '</td><td class="num ' + cls(r.active_return) + '">' + sp(r.active_return) + '</td><td class="num">' + r.floor + '</td></tr>';
-    }).join('') : '<tr><td colspan="7">No investors yet.</td></tr>';
+      var v = r.pm_value == null ? 10000000 : +r.pm_value, l = r.pm_loans || 0;
+      return '<tr class="' + (r.id === me ? 'me' : '') + '"><td class="rank">' + (i + 1) + '</td><td>' + esc(r.username) + (r.id === me ? ' (you)' : '') + '</td><td class="num">' + (r.floor || 1) + '</td><td class="num ' + cls(v - 10000000) + '">' + money(v) + '</td><td class="num' + (l ? ' neg' : '') + '">' + l + '</td></tr>';
+    }).join('') : '<tr><td colspan="5">No investors yet.</td></tr>';
   }
   var note = document.getElementById('note');
   if (window.Cloud && Cloud.ready) {
     Cloud.push().then(Cloud.leaderboard).then(function (r) { show(r.rows, r.me); note.textContent = r.error ? 'The standings could not be loaded: ' + r.error : 'Standings update each time a player saves.'; });
   } else {
-    var S = null, D, cp = 1, cb = 1; try { S = JSON.parse(localStorage.getItem('cornerOfficeDaily.v1') || 'null'); } catch (e) {}
-    D = (S && S.days) || []; D.forEach(function (r) { cp *= 1 + r.p; cb *= 1 + r.b; });
+    var P = null; try { P = JSON.parse(localStorage.getItem('cornerOfficePM.v1') || 'null'); } catch (e) {}
+    var PD = (P && P.days) || [], L = (P && P.loans) || [], v = 10000000, li = 0;
+    PD.forEach(function (r, k) { while (li < L.length && L[li].at <= k) { v = 10000000; li++; } v *= 1 + r.p; }); if (li < L.length) v = 10000000;
     var name = 'You'; try { name = localStorage.getItem('cornerOfficeUser') || 'You'; } catch (e) {}
-    show([{ id: 1, username: name, benchmark: 'S&P 500', days_traded: D.length, career_return: cp - 1, active_return: cp - cb, floor: 1 }], 1);
+    show([{ id: 1, username: name, floor: 1, pm_value: v, pm_loans: L.length }], 1);
     note.textContent = 'Demo mode: accounts are not connected, so only your own record is shown.';
   }
 })();

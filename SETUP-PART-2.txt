@@ -1,0 +1,72 @@
+CORNER OFFICE: REAL CLOSING PRICES (PART 2)
+===========================================
+
+You need: your Supabase project, and your Massive API key (keep it secret).
+
+STEP 1. Create the price tables
+-------------------------------
+In Supabase open "SQL Editor", click "New query", paste everything between the
+two lines of dashes, and click "Run". It is safe to run more than once.
+
+------------------------------------------------------------
+create table if not exists public.closes (
+  d date not null,
+  t text not null,
+  c double precision not null,
+  primary key (d, t)
+);
+create table if not exists public.market_days (
+  d date primary key,
+  n integer not null default 0,
+  fetched_at timestamptz not null default now()
+);
+create table if not exists public.market_meta (
+  id integer primary key,
+  last_try timestamptz not null default now()
+);
+create table if not exists public.watch (
+  t text primary key
+);
+
+alter table public.closes enable row level security;
+alter table public.market_days enable row level security;
+alter table public.market_meta enable row level security;
+alter table public.watch enable row level security;
+
+drop policy if exists "Prices are readable" on public.closes;
+drop policy if exists "Market days are readable" on public.market_days;
+drop policy if exists "Players can ask for a ticker" on public.watch;
+drop policy if exists "Watch list is readable" on public.watch;
+create policy "Prices are readable" on public.closes for select using (true);
+create policy "Market days are readable" on public.market_days for select using (true);
+create policy "Watch list is readable" on public.watch for select using (true);
+create policy "Players can ask for a ticker" on public.watch for insert to authenticated with check (t ~ '^[A-Z0-9.]{1,8}$');
+------------------------------------------------------------
+
+STEP 2. Store your Massive key as a secret
+------------------------------------------
+1. In Supabase, click "Edge Functions" in the left strip.
+2. Click "Secrets" (it may be under "Manage" or in the function settings).
+3. Add a new secret:   Name:  MASSIVE_API_KEY     Value:  (paste your Massive key)
+4. Save.
+
+STEP 3. Create the price job
+----------------------------
+1. Still in "Edge Functions", click "Deploy a new function", then "Via Editor".
+2. Name it exactly:   fetch-closes
+3. Delete the example code in the editor.
+4. Open the file fetch-closes.txt (in this folder), select all of it, copy it,
+   and paste it into the editor.
+5. Click "Deploy function".
+
+STEP 4. Test the job
+--------------------
+On the function's page, open the "Test" (or "Invoke") panel and send a request
+with an empty body. A good answer looks like:
+   {"ok":true,"days":{"2026-10-05":"601 prices saved", ...}}
+Then open "Table Editor" and check the "closes" table has rows.
+
+STEP 5. Upload the new site files
+---------------------------------
+Upload every .html file plus config.js and cloud.js to GitHub as before.
+(The .txt files do not need to be uploaded.)

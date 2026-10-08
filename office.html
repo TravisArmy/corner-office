@@ -48,8 +48,28 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 .talk b { display: block; font-family: var(--pixel); font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
 #status { margin: 0; font-family: var(--body); font-size: 18px; line-height: 1.45; min-height: 2.9em; }
 .hud.scene .top { visibility: hidden; }
+.hud.scene.money .stats { visibility: visible; }
+.stats[hidden], .chal[hidden] { display: none; }
+.stat b.pos { color: #74e0a0; } .stat b.neg { color: #ff9a8a; }
+.stat b.pop { animation: pop .5s steps(3) 2; }
+@keyframes pop { 50% { transform: scale(1.25); color: #fff; } }
+.badge { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: auto; padding: 0 5px; box-sizing: border-box; font: 700 13px var(--body); color: #fff; background: #d14a3c; border: 2px solid var(--ink); }
+.badge[hidden] { display: none; }
+.inbox { position: fixed; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(calc(100% - 32px), 560px); max-height: calc(100% - 40px); overflow: auto; box-sizing: border-box; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+.inbox[hidden] { display: none; }
+.inbox h2 { margin: 0; font: 700 22px var(--pixel); color: var(--gold); }
+.mlist { display: flex; flex-direction: column; gap: 8px; }
+.mitem { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 10px 12px; text-align: left; font: 400 15px var(--body); color: var(--paper); background: #2a2650; border: 2px solid var(--ink); cursor: pointer; }
+.mitem b { font: 600 16px var(--body); }
+.mitem.unread b::before { content: "\25CF  "; color: #ff7a68; }
+.mitem span { color: var(--mist); font-size: 14px; }
+.mitem:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.mread { display: flex; flex-direction: column; gap: 10px; }
+.mread .from { font: 600 14px var(--body); color: var(--mist); }
+.mread h3 { margin: 0; font: 700 20px var(--body); }
+.mread p { margin: 0; font-size: 17px; line-height: 1.5; }
+.mread .sign { font-style: italic; color: var(--mist); }
 .led { position: fixed; z-index: 0; overflow: hidden; white-space: nowrap; display: flex; align-items: center; font-family: "Courier New", ui-monospace, monospace; font-weight: 700; letter-spacing: .08em; color: #ffb347; text-shadow: 0 0 6px rgba(255, 179, 71, .7); background-image: radial-gradient(rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .55) 60%); background-size: 3px 3px; }
-.led2 { color: #6fe89a; text-shadow: 0 0 6px rgba(111, 232, 154, .7); }
 .led span { display: inline-block; padding-left: 100%; animation: tick 28s linear infinite; }
 @keyframes tick { to { transform: translateX(-100%); } }
 @media (prefers-reduced-motion: reduce) { .led span { animation: none; padding-left: 8px; } }
@@ -75,7 +95,6 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
 <canvas id="office" role="img" aria-label="Your starter office on the first floor, drawn as pixel art: two small windows, a basic desk, a market tracker on the wall, and your investor standing beside the desk."></canvas>
 
 <div class="led" id="led1" aria-hidden="true"><span></span></div>
-<div class="led led2" id="led2" aria-hidden="true"><span></span></div>
 <p class="sr" id="ledText"></p>
 
 <div class="hud">
@@ -84,17 +103,21 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       <a class="brand" href="index.html">CORNER <em>OFFICE</em></a>
       <div class="items">
         <button type="button" data-name="Career Mode" aria-pressed="false">Career Mode</button>
+        <button type="button" data-name="Portfolio Management" aria-pressed="false">Portfolio Management</button>
         <button type="button" data-name="Competitions" aria-pressed="false">Competitions</button>
         <button type="button" data-name="Marketplace" aria-pressed="false">Marketplace</button>
         <button type="button" data-name="Office" aria-pressed="false">Office</button>
+        <button type="button" data-name="Messages" aria-pressed="false" id="msgBtn">Messages <span class="badge" id="msgBadge" hidden>1</span></button>
       </div>
       <button type="button" class="out replay" id="replay">REPLAY PREVIOUS CUT SCENE</button>
       <a class="out" href="index.html">&lt; LOG OUT</a>
     </nav>
     <div class="stats box">
       <div class="stat"><span>Investor</span><b id="userStat">MarketMaven</b></div>
-      <div class="stat"><span>Portfolio</span><b class="cash" id="cashStat">$1,000,000</b></div>
       <div class="stat"><span>Office</span><b id="floorStat">Floor 1</b></div>
+      <div class="stat chal" id="chal1"><span id="chalLab">Floor 1 challenge</span><b class="cash" id="cashStat">$1,000,000</b></div>
+      <div class="stat chal" id="chal2"><span>vs S&amp;P 500</span><b id="vsStat">+0.00%</b></div>
+      <div class="stat chal" id="chal3"><span>Day</span><b id="dayStat">0 of 3</b></div>
       <span class="sample" id="sampleTag">Sample data</span>
     </div>
   </div>
@@ -103,6 +126,11 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     <p id="status" role="status" aria-live="polite">Not much of a view from the first floor. But everyone starts somewhere.</p>
     <div class="tbtn" id="sceneBtns" hidden><button type="button" class="sbtn" id="sceneSkip">SKIP</button><button type="button" class="sbtn go" id="sceneNext">NEXT</button></div>
   </div>
+</div>
+<div class="inbox box" id="inbox" role="dialog" aria-labelledby="inboxH" hidden>
+  <h2 id="inboxH">MESSAGES</h2>
+  <div id="inboxBody"></div>
+  <div class="tbtn" id="inboxBtns"></div>
 </div>
 <div class="card" id="floorCard" hidden>
   <p class="floor" id="cardH">FLOOR 1</p>
@@ -235,7 +263,71 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     var PANTS = [['#ece6d6', '#cfc7b2', '#f7f2e6'], ['#c9a06b', '#a47d4c', '#dcb681'], ['#3f5f9a', '#2f4a7c', '#5676b3']];
     var SHOES = [['#7d4a28', '#a36a3d', '#2a180c'], ['#2b2b34', '#4a4a58', '#0e0e12']];
     var SUIT = ['#2a2f55', '#1d2140', '#232848'], SUIT2 = ['#454854', '#30323c', '#3a3d48'];
+    function face(x, y, o, sk, skD, st, hc, hh, hd, f, blink) {
+      // head
+      R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
+      g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
+      g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
+      g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
+      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)');
+      g.restore();
+      hairFront(x, y, st, hc, hh, hd);
+      var br = o.hairColor > 1 ? hc : '#2b1e16', E = '#2b1e16', lk = (o.look || 0) * .5, sc = !!o.scared, by0 = sc ? 4.4 : 5.2;
+      // eyebrows (raised when scared)
+      R(x + 4.8, y + by0, 2.4, .5, br); R(x + 8.8, y + by0, 2.4, .5, br);
+      // eyes: both pupils sit in the same spot of each eye, so they look the same way
+      if (blink && !sc) { R(x + 5, y + 6.8, 2, .4, E); R(x + 9, y + 6.8, 2, .4, E); }
+      else if (sc) { R(x + 4.8, y + 5.6, 2.4, 2.2, '#ffffff'); R(x + 8.8, y + 5.6, 2.4, 2.2, '#ffffff'); R(x + 5.8 + lk, y + 6.4, .5, .8, E); R(x + 9.8 + lk, y + 6.4, .5, .8, E); }
+      else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.5 + lk, y + 6.2, 1, 1.3, E); R(x + 9.5 + lk, y + 6.2, 1, 1.3, E); R(x + 5, y + 6, 2, .3, E); R(x + 9, y + 6, 2, .3, E); if (f) { R(x + 4.5, y + 5.8, .6, .4, E); R(x + 10.9, y + 5.8, .6, .4, E); } }
+      R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
+      if (sc) { R(x + 7.3, y + 9.8, 1.4, 1.2, '#5c2e22'); R(x + 12.6, y + 2.6, .8, 1.4, '#9fdcff'); R(x + 12.4, y + 3.6, 1.2, .8, '#9fdcff'); }
+      else if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
+      if (!sc) R(x + 7, y + 10.9, 2, .3, skD);
+      if (o.cry) { R(x + 5.4, y + 7.6, .6, 2.4, '#7fd0ff'); R(x + 10, y + 7.6, .6, 3, '#7fd0ff'); R(x + 5.2, y + 10, 1, .6, '#7fd0ff'); R(x + 6.6, y + 10.6, 2.8, .4, '#5c2e22'); }
+      if (o.hotdog) { R(x + 11.4, y + 24.8, 5.4, 2.4, O); R(x + 11.8, y + 25.2, 4.6, 1.6, '#e3b565'); R(x + 11.6, y + 25.7, 5, .7, '#b5452f'); R(x + 12.4, y + 25.6, 3, .3, '#f6d25a'); }
+    }
+    /* A much bigger build (Buck): broad V-shaped torso, huge arms with rolled sleeves, grey vest, blue jeans. */
+    function drawBig(x, y, o, bob, blink) {
+      var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], hd = HAIR[o.hairColor][2], st = build(STYLES.m[o.hair] || STYLES.m[0]);
+      var J = ['#3d5f9e', '#2c4777', '#5a7cbc'], SH = ['#f8f5ec', '#d2cfd8'], V = ['#7c808c', '#5d616c', '#999daa'], so = SHOES[o.shoes || 0];
+      // legs (jeans) and shoes
+      R(x + 1.5, y + 27, 13, 16.5, O); R(x + 2, y + 27.5, 12, 4, J[0]); R(x + 2, y + 31, 5.6, 12, J[0]); R(x + 8.4, y + 31, 5.6, 12, J[0]);
+      R(x + 7.6, y + 31.5, .8, 11.5, O); R(x + 6.8, y + 28, .6, 15, J[1]); R(x + 13.2, y + 28, .8, 15, J[1]); R(x + 3.4, y + 29, .4, 13.5, J[2]); R(x + 9.8, y + 29, .4, 13.5, J[2]); R(x + 2, y + 42.3, 12, .7, J[1]);
+      [1.4, 8.4].forEach(function (q) { R(x + q - .5, y + 42.9, 7.2, 3.1, O); R(x + q, y + 43.4, 6.2, 1.7, so[0]); R(x + q + .5, y + 43.4, 2.6, .5, so[1]); R(x + q, y + 45.1, 6.2, .5, so[2]); });
+      y += d;
+      // arms: big sleeves rolled to the elbow, thick forearms
+      [[-4.5, 1], [14.5, 0]].forEach(function (a) {
+        var ax = x + a[0];
+        var bx = a[1] ? ax - 1.5 : ax + 6;
+        R(ax - .5, y + 9.8, 7, 10.2, O); R(bx, y + 11.2, 1.5, 6.4, O); R(ax, y + 10.3, 6, 8.4, SH[0]); R(a[1] ? bx + .5 : bx, y + 11.7, 1, 5.4, SH[0]);
+        R(a[1] ? bx + .5 : ax + 5.4, y + 12.4, 1.1, 4.4, SH[1]); R(ax + (a[1] ? 1.6 : 1.4), y + 12, 3, .5, SH[1]); R(ax + (a[1] ? 1 : 3.2), y + 14.2, 1.8, .4, SH[1]);
+        R(ax, y + 18.2, 6, 1.6, SH[1]); R(ax, y + 18.2, 6, .4, '#bdb9c4');
+        R(ax, y + 19.8, 6, 8.2, O); R(ax + .5, y + 19.8, 5, 7.8, sk); R(ax + (a[1] ? .5 : 4.3), y + 19.8, 1.2, 7.8, skD); R(ax + 2.4, y + 22, .4, 3.4, skD);
+        R(ax + .3, y + 27.2, 5.4, 3.6, O); R(ax + .8, y + 27.6, 4.4, 2.8, sk); R(ax + .8, y + 29.8, 4.4, .6, skD); R(ax + (a[1] ? 3.6 : 1.6), y + 28, .4, 2, skD);
+      });
+      // torso: shirt, then the vest over it
+      quad([x - 1.2, y + 9.4, x + 17.2, y + 9.4, x + 14.4, y + 28.4, x + 1.6, y + 28.4], O);
+      quad([x - .6, y + 9.9, x + 16.6, y + 9.9, x + 13.9, y + 27.9, x + 2.1, y + 27.9], SH[0]);
+      quad([x + 1.4, y + 9.9, x + 14.6, y + 9.9, x + 13.9, y + 27.9, x + 2.1, y + 27.9], O);
+      quad([x + 1.9, y + 10.2, x + 14.1, y + 10.2, x + 13.4, y + 27.6, x + 2.6, y + 27.6], V[0]);
+      quad([x + 11.6, y + 10.2, x + 14.1, y + 10.2, x + 13.4, y + 27.6, x + 11.2, y + 27.6], V[1]);
+      R(x + 3.2, y + 15.6, 4.2, .5, V[1]); R(x + 8.6, y + 15.6, 4.2, .5, V[1]); R(x + 3, y + 11, 1.4, 4, V[2]);
+      quad([x + 5.4, y + 10.2, x + 10.6, y + 10.2, x + 8, y + 17.6], O); quad([x + 5.9, y + 10.2, x + 10.1, y + 10.2, x + 8, y + 16.8], SH[0]);
+      R(x + 7.8, y + 13, .4, 3.6, SH[1]);
+      [18.6, 21.4, 24.2].forEach(function (b) { R(x + 7.5, y + b, 1, 1, '#2f3038'); });
+      R(x + 2.4, y + 26.6, 11.2, .6, V[1]);
+      quad([x + 2.6, y + 27.4, x + 7.8, y + 27.4, x + 5, y + 29.2], O); quad([x + 8.2, y + 27.4, x + 13.4, y + 27.4, x + 11, y + 29.2], O);
+      quad([x + 3.2, y + 27.4, x + 7.2, y + 27.4, x + 5, y + 28.6], V[1]); quad([x + 8.8, y + 27.4, x + 12.8, y + 27.4, x + 11, y + 28.6], V[1]);
+      // thick neck and collar
+      R(x + 4.6, y + 7.4, 6.8, 3.4, skD); R(x + 4.6, y + 7.4, 6.8, .9, 'rgba(40,15,5,.25)');
+      quad([x + 3.6, y + 10, x + 6.4, y + 9.4, x + 7.8, y + 12.6, x + 4.6, y + 12.2], O); quad([x + 4.1, y + 10.3, x + 6.2, y + 9.9, x + 7.4, y + 12, x + 4.9, y + 11.8], SH[0]);
+      quad([x + 12.4, y + 10, x + 9.6, y + 9.4, x + 8.2, y + 12.6, x + 11.4, y + 12.2], O); quad([x + 11.9, y + 10.3, x + 9.8, y + 9.9, x + 8.6, y + 12, x + 11.1, y + 11.8], SH[1]);
+      face(x, y - 3.4, o, sk, skD, st, hc, hh, hd, false, blink);
+      // a little stubble on the jaw
+      for (var s = 0; s < 6; s++) R(x + 5.2 + s * 1.1, y + 7.6 - (s === 0 || s === 5 ? .6 : 0), .4, .4, 'rgba(40,25,15,.35)');
+    }
     return function (x, y, o, bob, blink) {
+      if (o.big) { drawBig(x, y, o, bob, blink); return; }
       var d = bob ? .5 : 0, sk = SKIN[o.skin][0], skD = SKIN[o.skin][1], hc = HAIR[o.hairColor][0], hh = HAIR[o.hairColor][1], hd = HAIR[o.hairColor][2], f = o.gender === 'f', st = build(STYLES[f ? 'f' : 'm'][o.hair] || STYLES.m[0]), dr = f && !o.suit ? DRESS[o.dress || 0] : null, bc = o.belt ? '#1c1c22' : '#5a3a20';
       var sh = SHIRT[o.suit ? 0 : o.shirt], pa = o.suit === 2 ? ['#454854', '#30323c', '#5a5d6a'] : o.suit ? ['#2a2f55', '#1d2140', '#3a4070'] : PANTS[o.pants], so = SHOES[o.shoes], top = o.suit === 2 ? SUIT2 : o.suit ? SUIT : sh, lap = o.suit === 2 ? '#5a5d6a' : '#3a4070';
       if (dr) {
@@ -280,23 +372,7 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       if (o.suit) { R(x + 3, y + 24.6 - d, 10, 2.2, O); R(x + 3.5, y + 25.1 - d, 9, 1.2, top[1]); }
       else if (dr) { R(x + 3.5, y + 24.3, 9, .8, bc); R(x + 7.4, y + 24.2, 1.2, 1, '#e8b84a'); }
       else { R(x + 3, y + 25 - d, 10, 1.5, O); R(x + 3.5, y + 25.3 - d, 9, .8, bc); R(x + 7.3, y + 25.2 - d, 1.4, 1, '#e8b84a'); R(x + 7.7, y + 25.5 - d, .6, .4, bc); }
-      // head
-      R(x + 1.9, y + 5.6, 1.6, 3, O); R(x + 12.5, y + 5.6, 1.6, 3, O); R(x + 2.3, y + 6, 1.2, 2.2, skD); R(x + 12.5, y + 6, 1.2, 2.2, skD);
-      g.fillStyle = O; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 11.2, 13, 0, 0, 7); g.fill();
-      g.fillStyle = sk; g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.fill();
-      g.save(); g.beginPath(); g.ellipse((x + 8) * 2, (y + 6.6) * 2, 10.2, 12, 0, 0, 7); g.clip();
-      R(x + 11.2, y + 3, 2, 9, 'rgba(90,40,10,.18)');
-      g.restore();
-      hairFront(x, y, st, hc, hh, hd);
-      var br = o.hairColor > 1 ? hc : '#2b1e16';
-      R(x + 4.8, y + 5.2, 2.4, .5, br); R(x + 8.8, y + 5.2, 2.4, .5, br);
-      if (blink) { R(x + 5, y + 6.8, 2, .4, '#2b1e16'); R(x + 9, y + 6.8, 2, .4, '#2b1e16'); }
-      else { R(x + 5, y + 6.2, 2, 1.3, '#ffffff'); R(x + 9, y + 6.2, 2, 1.3, '#ffffff'); R(x + 5.8, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 9.6, y + 6.2, 1, 1.3, '#2b1e16'); R(x + 5, y + 6, 2, .3, '#2b1e16'); R(x + 9, y + 6, 2, .3, '#2b1e16'); if (f) { R(x + 4.5, y + 5.8, .6, .4, '#2b1e16'); R(x + 10.9, y + 5.8, .6, .4, '#2b1e16'); } }
-      R(x + 7.9, y + 7.2, .5, 1.8, skD); R(x + 7.4, y + 8.8, 1.4, .5, skD);
-      if (f) { R(x + 6.8, y + 10, 2.4, .8, '#b5495a'); R(x + 7.2, y + 10, 1.6, .3, '#d2697a'); } else { R(x + 6.6, y + 10.2, 2.8, .5, o.skin > 1 ? '#5c2e22' : '#96503f'); }
-      R(x + 7, y + 10.9, 2, .3, skD);
-      if (o.cry) { R(x + 5.4, y + 7.6, .6, 2.4, '#7fd0ff'); R(x + 10, y + 7.6, .6, 3, '#7fd0ff'); R(x + 5.2, y + 10, 1, .6, '#7fd0ff'); R(x + 6.6, y + 10.6, 2.8, .4, '#5c2e22'); }
-      if (o.hotdog) { R(x + 11.4, y + 24.8, 5.4, 2.4, O); R(x + 11.8, y + 25.2, 4.6, 1.6, '#e3b565'); R(x + 11.6, y + 25.7, 5, .7, '#b5452f'); R(x + 12.4, y + 25.6, 3, .3, '#f6d25a'); }
+      face(x, y, o, sk, skD, st, hc, hh, hd, f, blink);
     };
   }
   function loadChar() {
@@ -306,8 +382,10 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   }
 
   var person = makePerson(g, O), CHAR = loadChar();
-  var NEPO = { gender: 'm', skin: 0, hair: 3, hairColor: 2, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: true }, DAD = { gender: 'm', skin: 0, hair: 2, hairColor: 4, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: 2 };
+  var NEPO = { gender: 'm', skin: 0, hair: 2, hairColor: 2, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: true }, DAD = { gender: 'm', skin: 0, hair: 2, hairColor: 4, shirt: 0, pants: 0, shoes: 1, belt: 1, suit: 2 };
+  var BUCK = { gender: 'm', skin: 1, hair: 0, hairColor: 1, shoes: 0, big: true };
   var scene = { on: false, type: 'intro', nx: -20, dx: -20, dadIn: false, arrived: false, i: -1 }, SCENES = {};
+  function mix(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in (b || {})) o[k] = b[k]; return o; }
 
   function draw(ms) {
     var t = ms / 1000, i, j;
@@ -401,16 +479,17 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     shadow(px + 8, fy + 11, 10, 2, .34);
     // the two ticker boards on the wall (their moving text is laid over the top)
     var by = Math.max(6.5, fy - 93);
-    [0, 8.5].forEach(function (o2) { R(L + .5, by + o2 - .5, 99, 8, O); R(L + 1, by + o2, 98, 7, '#2b2c3c'); R(L + 2, by + o2 + .5, 96, 6, '#07070c'); R(L + 1, by + o2, 98, .5, '#44465c'); });
+    [4.25].forEach(function (o2) { R(L + .5, by + o2 - .5, 99, 8, O); R(L + 1, by + o2, 98, 7, '#2b2c3c'); R(L + 2, by + o2 + .5, 96, 6, '#07070c'); R(L + 1, by + o2, 98, .5, '#44465c'); });
     if (scene.on) {
       var tg = L + 72, def = SCENES[scene.type] || {}, walk = Math.floor(t * 7) % 2 === 1;
       if (!scene.arrived) { scene.nx = Math.min(tg, scene.nx + .55); if (scene.nx >= tg) { scene.arrived = true; scene.i = 0; showLine(); } } else scene.nx = tg;
-      if (scene.dadIn) { var moving = scene.dx < L + 50; scene.dx = Math.min(L + 50, scene.dx + .6); shadow(scene.dx + 8, fy + 11, 10, 2, .34); person(scene.dx, fy + 10.4 - 46, DAD, moving ? walk : bob, false); }
+      var two = def.second, sec = two && scene.dadIn;
+      if (sec) { var stop = L + (two.big ? 44 : 50), moving = scene.dx < stop; scene.dx = Math.min(stop, scene.dx + .6); shadow(scene.dx + 8, fy + 11, two.big ? 14 : 10, 2, .34); person(scene.dx, fy + 10.4 - 46, mix(two.who, { look: 1 }), moving ? walk : bob, false); }
       shadow(scene.nx + 8, fy + 11, 10, 2, .34);
-      var no = {}; for (var k2 in NEPO) no[k2] = NEPO[k2]; for (k2 in (def.nepo || {})) no[k2] = def.nepo[k2];
-      person(scene.nx, fy + 10.4 - 46, no, scene.arrived ? !bob : walk, !reduce && (t % 5) > 4.85);
+      var no = mix(mix(NEPO, def.nepo), sec ? def.nepoAfter : null); no.look = sec ? -1 : 1;
+      person(scene.nx, fy + 10.4 - 46, no, scene.arrived ? !bob : walk, !no.scared && !reduce && (t % 5) > 4.85);
     }
-    person(px, fy + 10.4 - 46, CHAR, bob, blink);
+    person(px, fy + 10.4 - 46, scene.on ? mix(CHAR, { look: -1 }) : CHAR, bob, blink);
 
     // room lighting: soft vignette
     var vg = g.createRadialGradient(UW, UH * .9, UH * .7, UW, UH * .9, Math.max(UW, UH) * 1.5); vg.addColorStop(0, 'rgba(14,10,36,0)'); vg.addColorStop(1, 'rgba(14,10,36,.42)'); g.fillStyle = vg; g.fillRect(0, 0, UW * 2, UH * 2);
@@ -434,19 +513,25 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   var st = document.getElementById('status'), btns = document.querySelectorAll('.items button'), who = document.getElementById('who'), me = (function () { try { return localStorage.getItem('cornerOfficeUser'); } catch (e) { return null; } })();
   if (me) { document.getElementById('sampleTag').hidden = true; } else me = who.textContent;
   who.textContent = me; document.getElementById('userStat').textContent = me;
-  var NB = 'Nepo Baby', ME = '\u0001', DADN = 'Mr. Baby';
-  SCENES.intro = { lines: [
+  var NB = 'Nepo Baby', ME = '\u0001', DADN = 'Mr. Baby', BK = 'Buck Showalter';
+  SCENES.intro = { second: { at: 8, who: BUCK, big: true }, nepoAfter: { scared: true }, money: 11, lines: [
     [NB, 'Well, well. Fresh meat on Floor 1. Welcome to the jungle.'],
     [NB, "Love the office. Two whole windows, and a front-row seat to the world's shittiest hot dog stand. Inspiring stuff."],
     [ME, 'Sorry, who are you?'],
     [NB, "Nepo Baby. Floor 5. Don't bother writing it down. You'll never be up there to visit."],
-    [NB, "I'm on the fast track to Floor 10. It's amazing how far hard work gets you when your dad owns the building."],
-    [NB, "This is the show, rookie. And I'm going to dominate it. You included."],
+    [NB, "I'm on the fast track to Floor 10. It's amazing how you're rewarded when you're the hardest worker. Just ask my dad, he owns the building."],
     [NB, 'Anyway, I just came down to say welcome. And goodbye. Most new hires are selling hot dogs by Friday.'],
-    [ME, 'Keep my seat warm on Floor 10. I am the game, pal.'],
-    [NB, 'Sure you are, chief. Have fun down here with the rats.']
-  ], card: ['FLOOR 1', 'Trade for three business days and beat the market to climb the ladder past Nepo Baby.', 'START TRADING', 'career.html'] };
-  SCENES.win = { nepo: { cry: true }, dadAt: 3, lines: [
+    [ME, 'Thanks for the warning. And thank you for keeping my seat warm on Floor 5.'],
+    [NB, 'Have fun down here with the rats.'],
+    [BK, 'Nepo, stop being mean to the newest member of the building.'],
+    [BK, "Hi, I'm Buck Showalter, and the only thing bigger than my huge arms is my massive portfolio."],
+    [ME, 'Nice to meet you, Buck.'],
+    [BK, "Let's get you started. Here is $1,000,000. I want to see what you can do."],
+    [BK, "You have three business days to prove yourself. I'll send you challenges along the way, and maybe you can take Nepo Baby's seat."],
+    [NB, 'Likely story. My dad would have something to say about that.'],
+    [BK, 'Keep an eye out for my messages. Good luck!']
+  ], card: ['FLOOR 1', 'Trade for three business days and beat the market to climb the ladder past Nepo Baby.', 'CONTINUE', ''] };
+  SCENES.win = { nepo: { cry: true }, second: { at: 3, who: DAD }, lines: [
     [NB, 'No. No, no, no. You beat the market? In three days?'],
     [NB, "Do you know how long I've had Floor 5? Since my eighteenth birthday. It was a present!"],
     [ME, 'Are you... crying?'],
@@ -466,26 +551,47 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
   function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lset(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function met() { return ls('cornerOfficeMetNepo') === '1'; }
+  /* Floor challenge blocks: three closes each. A restart ("cut") abandons the block it falls in, and the next block starts there. */
+  function blocks(D, cuts) {
+    var i = 0, res = [], cs = (cuts || []).slice().sort(function (a, b) { return a - b; });
+    for (var guard = 0; guard < 100000; guard++) {
+      var e = i + 3, nc = null;
+      for (var q = 0; q < cs.length; q++) if (cs[q] > i) { nc = cs[q]; break; }
+      if (nc !== null && nc < e && nc <= D.length) { i = nc; continue; }
+      if (D.length < e) return { res: res, won: false, cur: D.slice(i), from: i };
+      var p = 1, b = 1; D.slice(i, e).forEach(function (r) { p *= 1 + r.p; b *= 1 + r.b; });
+      res.push(p > b ? 'win' : 'lose');
+      if (p > b) return { res: res, won: true, cur: D.slice(i, e), from: i };
+      i = e;
+    }
+    return { res: res, won: false, cur: [], from: D.length };
+  }
   /* Career numbers come from the Career Mode save: floor results run in blocks of three closes. */
   function career() {
     var S = null; try { S = JSON.parse(ls('cornerOfficeDaily.v1') || 'null'); } catch (e) {}
-    var D = (S && S.days) || [], cp = 1, cb = 1, res = [], k, won = false, blk = [];
+    var D = (S && S.days) || [], cp = 1, cb = 1, B = blocks(D, S && S.cuts), blk = B.won ? [] : B.cur;
     D.forEach(function (r) { cp *= 1 + r.p; cb *= 1 + r.b; });
-    for (k = 0; k * 3 < D.length && !won; k++) { blk = D.slice(k * 3, k * 3 + 3); if (blk.length < 3) break; var p = 1, b = 1; blk.forEach(function (r) { p *= 1 + r.p; b *= 1 + r.b; }); won = p > b; res.push(won ? 'win' : 'lose'); blk = []; }
     var fp = 1, fb = 1; blk.forEach(function (r) { fp *= 1 + r.p; fb *= 1 + r.b; });
-    return { started: !!(S && S.W), n: D.length, cp: cp - 1, cb: cb - 1, res: res, won: won, day: blk.length, fp: fp - 1, fb: fb - 1 };
+    return { started: !!(S && S.W), n: D.length, cp: cp - 1, cb: cb - 1, res: B.res, won: B.won, day: blk.length, fp: fp - 1, fb: fb - 1 };
   }
   function sp(x) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(2) + '%'; }
   function boards() {
-    var c = career(), seen = +(ls('cornerOfficeSeenBlocks') || 0), up = c.won && seen >= c.res.length, a, b2, d1 = c.fp - c.fb, d2 = c.cp - c.cb;
+    var c = career(), seen = +(ls('cornerOfficeSeenBlocks') || 0), up = c.won && seen >= c.res.length, a, d1 = c.fp - c.fb;
     document.getElementById('floorStat').textContent = up ? 'Floor 5' : 'Floor 1';
-    document.getElementById('cashStat').textContent = '$' + Math.round(1000000 * (1 + c.cp)).toLocaleString('en-US');
+    var show = met() || scene.money; ['chal1', 'chal2', 'chal3'].forEach(function (id) { document.getElementById(id).hidden = !show; });
+    document.getElementById('chalLab').textContent = up ? 'Floor 5 challenge' : 'Floor 1 challenge';
+    if (up) { document.getElementById('cashStat').textContent = 'Coming soon'; document.getElementById('vsStat').textContent = '-'; document.getElementById('dayStat').textContent = '-'; }
+    else {
+      if (!scene.counting) document.getElementById('cashStat').textContent = '$' + Math.round(1000000 * (1 + c.fp)).toLocaleString('en-US');
+      var vs = document.getElementById('vsStat'); vs.textContent = sp(d1); vs.className = d1 > 1e-9 ? 'pos' : d1 < -1e-9 ? 'neg' : '';
+      document.getElementById('dayStat').textContent = c.day + ' of 3';
+    }
     if (up) a = 'FLOOR 5  •  YOU BEAT THE FLOOR 1 CHALLENGE  •  NEXT CHALLENGE COMING SOON';
     else if (!c.started) a = 'FLOOR 1  •  TRADE FOR THREE DAYS AND BEAT THE BENCHMARK  •  OPEN CAREER MODE TO BEGIN';
     else a = 'FLOOR 1  •  TRADE FOR THREE DAYS AND BEAT THE BENCHMARK  •  ' + (c.day ? 'DAY ' + c.day + ' OF 3  •  YOU ' + sp(c.fp) + '  •  S&P 500 ' + sp(c.fb) + '  •  ' + (d1 >= 0 ? 'AHEAD BY ' : 'BEHIND BY ') + (Math.abs(d1) * 100).toFixed(2) + '%' : 'YOUR THREE DAYS START AT THE NEXT CLOSE') + (c.res.length && !c.won ? '  •  ATTEMPT ' + (c.res.length + 1) : '');
-    b2 = 'CAREER  •  ' + (c.n ? c.n + ' DAY' + (c.n > 1 ? 'S' : '') + ' TRADED  •  YOU ' + sp(c.cp) + '  •  S&P 500 ' + sp(c.cb) + '  •  ACTIVE ' + sp(d2) : 'NO DAYS TRADED YET  •  STARTING CASH $1,000,000');
-    document.querySelector('#led1 span').textContent = a; document.querySelector('#led2 span').textContent = b2;
-    document.getElementById('ledText').textContent = a + '. ' + b2;
+    document.querySelector('#led1 span').textContent = a;
+    document.getElementById('ledText').textContent = a;
+    refreshBadge();
     return c;
   }
   function showLine() {
@@ -493,7 +599,8 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     document.getElementById('sceneNext').focus({ preventScroll: true });
   }
   function startScene(type, replay) {
-    scene.on = true; scene.type = type; scene.replay = !!replay; scene.arrived = false; scene.dadIn = false; scene.i = -1; scene.nx = -20; scene.dx = -20;
+    scene.on = true; scene.type = type; scene.replay = !!replay; scene.arrived = false; scene.dadIn = false; scene.i = -1; scene.nx = -20; scene.dx = -20; scene.money = false;
+    closeInbox(); document.querySelector('.hud').classList.remove('money');
     document.querySelector('.hud').classList.add('scene'); document.getElementById('sceneBtns').hidden = false;
     who.textContent = '...'; st.textContent = 'Someone walks into your office.';
     if (reduce) { scene.arrived = true; scene.i = 0; showLine(); draw(0); }
@@ -507,21 +614,64 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
     var def = SCENES[scene.type];
     if (!scene.arrived) { scene.arrived = true; scene.i = 0; showLine(); }
     else if (++scene.i >= def.lines.length) endScene();
-    else { if (def.dadAt === scene.i) { scene.dadIn = true; if (reduce) scene.dx = 1e9; } showLine(); }
+    else { if (def.second && def.second.at === scene.i) { scene.dadIn = true; if (reduce) scene.dx = 1e9; } if (def.money === scene.i) giveMoney(); showLine(); }
     if (reduce) draw(0);
   });
   document.getElementById('sceneSkip').addEventListener('click', endScene);
+  /* Buck hands over the $1,000,000: the challenge bar appears and counts up. */
+  function giveMoney() {
+    scene.money = true; scene.counting = true; document.querySelector('.hud').classList.add('money'); boards();
+    var el = document.getElementById('cashStat'), t0 = null;
+    function step(ms) { if (t0 === null) t0 = ms; var k = Math.min(1, (ms - t0) / 1400); el.textContent = '$' + Math.round(1000000 * k * k * (3 - 2 * k)).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(step); else { scene.counting = false; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
+    if (reduce) { scene.counting = false; el.textContent = '$1,000,000'; } else requestAnimationFrame(step);
+  }
   document.getElementById('floorGo').addEventListener('click', function () {
     var type = scene.type, go = SCENES[type].card[3];
     if (!scene.replay) { lset('cornerOfficeLastScene', type); if (type === 'intro') lset('cornerOfficeMetNepo', '1'); else lset('cornerOfficeSeenBlocks', String(+(ls('cornerOfficeSeenBlocks') || 0) + 1)); }
     if (go && !scene.replay) { window.location.href = go; return; }
-    scene.on = false; document.getElementById('floorCard').hidden = true; document.querySelector('.hud').classList.remove('scene'); document.getElementById('sceneBtns').hidden = true;
-    who.textContent = me; st.textContent = 'Back to work.'; boards(); if (reduce) draw(0);
+    scene.on = false; scene.money = false; document.getElementById('floorCard').hidden = true; document.querySelector('.hud').classList.remove('scene', 'money'); document.getElementById('sceneBtns').hidden = true;
+    who.textContent = me; st.textContent = 'Back to work.';
+    var mid = null;
+    if (!scene.replay) { var c3 = career(); mid = type === 'intro' ? 'floor1' : type === 'win' ? 'win1' : 'lose' + c3.res.length; addMsg(mid); }
+    boards(); if (reduce) draw(0);
+    if (mid) { st.textContent = 'You have a new message from Buck.'; setTimeout(function () { openInbox(mid); }, 500); }
   });
+  /* Messages from Buck, kept with the rest of the save. */
+  var MSG = {
+    floor1: { s: 'Your first challenge', b: ["You have three days to trade. At the end of those three days, if you beat the benchmark, maybe we'll give you Nepo Baby's seat...", 'Your $1,000,000 is waiting in Career Mode. Set your weights before 9:00 am Eastern.'], go: true },
+    win1: { s: 'Welcome to Floor 5', b: ['Three days, and you beat the market. Told you I was watching.', "Nepo's desk is yours. Try not to let it go to your head. Your next challenge is on its way."] },
+    lose: { s: 'Shake it off', b: ['The market won this round. It happens to everyone, even me. Well, almost.', 'Your next three days start at the next close. Make them count.'], go: true }
+  };
+  function msgs() { try { return JSON.parse(ls('cornerOfficeMessages') || '[]'); } catch (e) { return []; } }
+  function addMsg(id) { var m = msgs(); if (m.some(function (x) { return x.id === id; })) return; m.unshift({ id: id, read: false, d: new Date().toISOString().slice(0, 10) }); lset('cornerOfficeMessages', JSON.stringify(m)); refreshBadge(); }
+  function msgDef(id) { return MSG[id] || MSG[id.replace(/\d+$/, '')]; }
+  function refreshBadge() { var n = msgs().filter(function (x) { return !x.read; }).length, bd = document.getElementById('msgBadge'); bd.hidden = !n; bd.textContent = n; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function openInbox(id) {
+    var box = document.getElementById('inbox'), body = document.getElementById('inboxBody'), bt = document.getElementById('inboxBtns'), m = msgs();
+    if (id) {
+      var d = msgDef(id); m.forEach(function (x) { if (x.id === id) x.read = true; }); lset('cornerOfficeMessages', JSON.stringify(m)); refreshBadge();
+      body.innerHTML = '<div class="mread"><span class="from">From: Buck Showalter</span><h3>' + esc(d.s) + '</h3>' + d.b.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '<p class="sign">Buck</p></div>';
+      bt.innerHTML = '<button type="button" class="sbtn" data-inbox="list">ALL MESSAGES</button>' + (d.go ? '<button type="button" class="sbtn go" data-inbox="career">OPEN CAREER MODE</button>' : '<button type="button" class="sbtn go" data-inbox="close">CLOSE</button>');
+    } else {
+      body.innerHTML = m.length ? '<div class="mlist">' + m.map(function (x) { var d = msgDef(x.id); return '<button type="button" class="mitem' + (x.read ? '' : ' unread') + '" data-msg="' + esc(x.id) + '"><b>' + esc(d.s) + '</b><span>Buck Showalter &middot; ' + esc(x.d) + '</span></button>'; }).join('') + '</div>' : '<p>No messages yet.</p>';
+      bt.innerHTML = '<button type="button" class="sbtn go" data-inbox="close">CLOSE</button>';
+    }
+    box.hidden = false; var f = box.querySelector('.go'); if (f) f.focus();
+  }
+  function closeInbox() { document.getElementById('inbox').hidden = true; }
+  document.getElementById('inbox').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.msg) openInbox(b.dataset.msg);
+    else if (b.dataset.inbox === 'list') openInbox(null);
+    else if (b.dataset.inbox === 'career') window.location.href = 'career.html';
+    else if (b.dataset.inbox === 'close') { closeInbox(); document.getElementById('msgBtn').focus(); }
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !document.getElementById('inbox').hidden) closeInbox(); });
   document.getElementById('replay').addEventListener('click', function () { startScene(ls('cornerOfficeLastScene') || 'intro', true); });
   function placeBoards() {
     var u = window.innerWidth / UW, by = Math.max(6.5, fy - 93);
-    [['led1', 0], ['led2', 8.5]].forEach(function (b3) { var el = document.getElementById(b3[0]); el.style.left = (L + 2) * u + 'px'; el.style.top = (by + b3[1] + .5) * u + 'px'; el.style.width = 96 * u + 'px'; el.style.height = 6 * u + 'px'; el.style.fontSize = Math.max(10, 4.2 * u) + 'px'; });
+    [['led1', 4.25]].forEach(function (b3) { var el = document.getElementById(b3[0]); el.style.left = (L + 2) * u + 'px'; el.style.top = (by + b3[1] + .5) * u + 'px'; el.style.width = 96 * u + 'px'; el.style.height = 6 * u + 'px'; el.style.fontSize = Math.max(10, 4.2 * u) + 'px'; });
   }
   placeBoards();
   (function () { var c = boards(), seen = +(ls('cornerOfficeSeenBlocks') || 0); if (met() && c.res.length > seen) setTimeout(function () { startScene(c.res[seen], false); }, 700); })();
@@ -530,6 +680,8 @@ body { background: var(--ink); color: var(--paper); font-family: var(--body); fo
       btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
       if (b.dataset.name === 'Career Mode') { if (met()) window.location.href = 'career.html'; else startScene('intro', false); return; }
       if (b.dataset.name === 'Competitions') { window.location.href = 'leaderboard.html'; return; }
+      if (b.dataset.name === 'Portfolio Management') { window.location.href = 'portfolio.html'; return; }
+      if (b.dataset.name === 'Messages') { openInbox(null); return; }
       st.textContent = b.dataset.name + ' opens from here. That part of the game is not built yet.';
     });
   });

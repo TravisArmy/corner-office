@@ -1,0 +1,19 @@
+CORNER OFFICE - PART 3: PORTFOLIO MANAGEMENT ON THE LEADERBOARD
+===============================================================
+
+The leaderboard now shows each player's Portfolio Management value and
+how many loans they have taken. Supabase needs two new columns to store them.
+
+1. Go to supabase.com and open your project.
+2. In the left menu, click "SQL Editor", then "New query".
+3. Copy everything between the lines below, paste it in, and click "Run".
+
+-------------------- copy from here --------------------
+alter table public.profiles add column if not exists pm_value numeric not null default 10000000;
+alter table public.profiles add column if not exists pm_loans integer not null default 0;
+--------------------- copy to here ---------------------
+
+4. You should see "Success. No rows returned". Running it twice is harmless.
+
+Do this BEFORE you upload the new files to GitHub. If the new files go up
+first, the leaderboard stops updating until these two columns exist.

@@ -1,0 +1,49 @@
+// Corner Office: fetch-closes
+// Fetches end-of-day closing prices from Massive and stores them in your database.
+// It runs when a player opens Career Mode and the latest prices are not stored yet,
+// at most once every 10 minutes. Your Massive key stays here on the server.
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const GAME_TICKERS = ["A","AAPL","ABBNY","ABBV","ABNB","ABT","ACGL","ACN","ADBE","ADI","ADM","ADP","ADSK","AEE","AEM","AEP","AES","AFL","AFRM","AIG","AIZ","AJG","AKAM","ALB","ALGN","ALL","ALLE","AMAT","AMCR","AMD","AME","AMGN","AMP","AMT","AMX","AMZN","ANET","AON","AOS","APA","APD","APH","APO","APP","APTV","ARE","ARES","ARM","ASML","ATO","AVB","AVGO","AVY","AWK","AXON","AXP","AZN","AZO","BA","BABA","BAC","BALL","BAX","BBY","BCE","BCS","BDX","BEN","BEP","BF.B","BG","BHP","BIDU","BIIB","BIRK","BKNG","BKR","BLDR","BLK","BMY","BNY","BP","BR","BRK.B","BRO","BSX","BTI","BUD","BX","BXP","C","CAG","CAH","CARR","CAT","CAVA","CB","CBOE","CBRE","CCI","CCL","CDNS","CDW","CEG","CF","CFG","CHD","CHRW","CHTR","CHWY","CI","CINF","CL","CLX","CMCSA","CME","CMG","CMI","CMS","CNC","CNI","CNP","CNQ","COF","COIN","COO","COP","COR","COST","CP","CPAY","CPB","CPRT","CPT","CRH","CRL","CRM","CRWD","CSCO","CSGP","CSX","CTAS","CTRA","CTSH","CTVA","CVNA","CVS","CVX","D","DAL","DASH","DAY","DD","DDOG","DE","DECK","DELL","DEO","DG","DGX","DHI","DHR","DIS","DKNG","DLR","DLTR","DOC","DOCU","DOV","DOW","DPZ","DRI","DTE","DUK","DUOL","DVA","DVN","DXCM","EA","EADSY","EBAY","ECL","ED","EFX","EG","EIX","EL","ELV","EME","EMR","ENB","EOG","EPAM","EQIX","EQNR","EQR","EQT","ERIC","ERIE","ES","ESS","ETN","ETR","EVRG","EW","EXC","EXE","EXPD","EXPE","EXR","F","FANG","FAST","FCX","FDS","FDX","FE","FFIV","FICO","FIS","FISV","FITB","FIX","FOX","FOXA","FRT","FSLR","FTNT","FTV","GD","GDDY","GE","GEHC","GEN","GEV","GFS","GILD","GIS","GL","GLW","GM","GNRC","GOOG","GOOGL","GPC","GPN","GRMN","GS","GSK","GWW","HAL","HAS","HBAN","HCA","HD","HIG","HII","HLT","HMC","HOLX","HON","HOOD","HPE","HPQ","HRL","HSBC","HSIC","HST","HSY","HUBB","HUBS","HUM","HWM","IBKR","IBM","ICE","IDXX","IEX","IFF","INCY","INFY","INTC","INTU","INVH","IONQ","IP","IQV","IR","IRM","ISRG","IT","ITW","IVZ","J","JBHT","JBL","JCI","JD","JKHY","JNJ","JPM","KDP","KEY","KEYS","KHC","KIM","KKR","KLAC","KMB","KMI","KO","KR","KVUE","L","LCID","LDOS","LEN","LH","LHX","LI","LII","LIN","LLY","LMT","LNT","LOW","LRCX","LULU","LUV","LVMUY","LVS","LW","LYB","LYV","MA","MAA","MAR","MAS","MCD","MCHP","MCK","MCO","MDB","MDLZ","MDT","MELI","MET","META","MGM","MKC","MLM","MMM","MNST","MO","MOH","MOS","MPC","MPWR","MRK","MRNA","MRSH","MRVL","MS","MSCI","MSFT","MSI","MSTR","MTB","MTCH","MTD","MU","MUFG","NCLH","NDAQ","NDSN","NEE","NEM","NET","NFLX","NGG","NI","NIO","NKE","NOC","NOK","NOW","NRG","NSC","NSRGY","NTAP","NTDOY","NTES","NTRS","NU","NUE","NVDA","NVO","NVR","NVS","NWS","NWSA","NXPI","O","ODFL","OKE","OKTA","OMC","ON","ONON","ORCL","ORLY","OTIS","OXY","PANW","PAYC","PAYX","PBR","PCAR","PCG","PDD","PEG","PEP","PFE","PFG","PG","PGR","PH","PHM","PINS","PKG","PLD","PLTR","PM","PNC","PNR","PNW","PODD","POOL","PPG","PPL","PRU","PSA","PSKY","PSX","PTC","PWR","PYPL","Q","QCOM","RACE","RBLX","RCL","RDDT","REG","REGN","RF","RIO","RIVN","RJF","RKLB","RKT","RL","RMD","ROK","ROL","ROP","ROST","RSG","RTX","RVTY","RY","RYAAY","SAN","SAP","SBAC","SBUX","SCHW","SE","SHEL","SHOP","SHW","SIEGY","SJM","SLB","SMCI","SNA","SNAP","SNDK","SNOW","SNPS","SNY","SO","SOFI","SOLV","SONY","SPG","SPGI","SPOT","SRE","STE","STLA","STLD","STT","STX","STZ","SW","SWK","SWKS","SYF","SYK","SYY","T","TAP","TCEHY","TD","TDG","TDY","TEAM","TECH","TEL","TER","TFC","TGT","TJX","TKO","TM","TMO","TMUS","TPL","TPR","TRGP","TRMB","TROW","TRV","TSCO","TSLA","TSM","TSN","TT","TTD","TTE","TTWO","TWLO","TXN","TXT","TYL","U","UAL","UBER","UBS","UDR","UHS","UL","ULTA","UNH","UNP","UPS","URI","USB","V","VALE","VICI","VLO","VLTO","VMC","VOD","VRSK","VRSN","VRTX","VST","VTR","VTRS","VZ","WAB","WAT","WBD","WDAY","WDC","WEC","WELL","WFC","WM","WMB","WMT","WRB","WSM","WST","WTW","WY","WYNN","XEL","XOM","XPEV","XYL","XYZ","YUM","Z","ZBH","ZBRA","ZM","ZS","ZTS"];
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+
+function easternToday(): string {
+  const p: Record<string, string> = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).forEach((x) => (p[x.type] = x.value));
+  return `${p.year}-${p.month}-${p.day}`;
+}
+function lastWeekdays(n: number): string[] {
+  const out: string[] = [], [y, m, d] = easternToday().split("-").map(Number), day = new Date(Date.UTC(y, m - 1, d));
+  while (out.length < n) { const g = day.getUTCDay(); if (g !== 0 && g !== 6) out.unshift(day.toISOString().slice(0, 10)); day.setUTCDate(day.getUTCDate() - 1); }
+  return out;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const key = Deno.env.get("MASSIVE_API_KEY");
+  if (!key) return json({ error: "MASSIVE_API_KEY is not set in Edge Function secrets." }, 500);
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+  // at most one fetch every 10 minutes, however many players ask
+  const { data: meta } = await sb.from("market_meta").select("last_try").eq("id", 1).maybeSingle();
+  if (meta && Date.now() - new Date(meta.last_try).getTime() < 10 * 60 * 1000) return json({ ok: true, skipped: "checked recently" });
+  await sb.from("market_meta").upsert({ id: 1, last_try: new Date().toISOString() });
+
+  const { data: watch } = await sb.from("watch").select("t").limit(1000);
+  const want = new Set<string>([...GAME_TICKERS, ...((watch ?? []).map((w: { t: string }) => w.t))]);
+
+  // the last four weekdays are re-fetched together so prices stay consistent after a stock split
+  const report: Record<string, unknown> = {};
+  for (const d of lastWeekdays(4)) {
+    const r = await fetch(`https://api.massive.com/v2/aggs/grouped/locale/us/market/stocks/${d}?adjusted=true&include_otc=true&apiKey=${key}`);
+    if (!r.ok) { report[d] = `no data yet (${r.status})`; continue; }
+    const body = await r.json();
+    const rows = (body.results ?? []).filter((x: { T: string; c: number }) => want.has(x.T) && x.c > 0).map((x: { T: string; c: number }) => ({ d, t: x.T, c: x.c }));
+    if (rows.length < 100) { report[d] = "market closed or not published yet"; continue; }
+    for (let i = 0; i < rows.length; i += 500) { const { error } = await sb.from("closes").upsert(rows.slice(i, i + 500)); if (error) return json({ error: error.message }, 500); }
+    await sb.from("market_days").upsert({ d, n: rows.length, fetched_at: new Date().toISOString() });
+    report[d] = rows.length + " prices saved";
+  }
+  return json({ ok: true, days: report });
+});
